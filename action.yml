@@ -1,0 +1,59 @@
+name: S3 Index Generator
+author: Josh Beard
+description: Generates index files for S3
+inputs:
+  bucket:
+    description: The name of the S3 bucket
+    required: false
+  prefix:
+    description: prefix is the path/key to start at in the bucket
+    required: false
+  date_format:
+    description: The date format
+    required: false
+  link_to_index:
+    description: >
+      link to index will link to "index.html" for paths instead of just the path.
+      e.g. foo/ vs foo/index.html
+    required: false
+  relative_links:
+    description: toggles using relative links or absolute links
+    required: false
+  title:
+    description: title is shown at the top of the pages
+    required: false
+  url:
+    description: url is used for generating links when relative_links is false
+    required: false
+  staging_dir:
+    description: staging_dir is used when running without the '-upload' flag.
+    required: false
+  template:
+    description: path to a custom Go template to use for the index file
+    required: false
+  config:
+    description: path to a config file
+    required: false
+  upload:
+    description: upload to s3 or generate locally
+    required: false
+
+runs:
+  using: 'docker'
+  image: 'docker://joshbeard/s3-index-generator:latest'
+  env:
+    BUCKET: ${{ inputs.bucket }}
+    PREFIX: ${{ inputs.prefix }}
+    LINK_TO_INDEX: ${{ inputs.link_to_index }}
+    RELATIVE_LINKS: ${{ inputs.relative_links }}
+    TITLE: ${{ inputs.title }}
+    DATE_FORMAT: ${{ inputs.date_format }}
+    URL: ${{ inputs.url }}
+    STAGING_DIR: ${{ inputs.staging_dir }}
+    TEMPLATE: ${{ inputs.template }}
+    CONFIG: ${{ inputs.config }}
+    UPLOAD: ${{ inputs.upload }}
+
+branding:
+  icon: globe
+  color: orange

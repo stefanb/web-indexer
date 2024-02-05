@@ -18,6 +18,10 @@ deployments.
 
 ## Usage
 
+Download from the [releases](https://github.com/joshbeard/s3-index-generator/releases)
+or use the [`joshbeard/s3-index-generator`](https://hub.docker.com/r/joshbeard/s3-index-generator)
+Docker image.
+
 ```plain
 Usage of s3-index-generator:
   -bucket string
@@ -51,6 +55,27 @@ __Example:__
 ```shell
 s3-index-generator -config .s3-index.yml -upload
 ```
+
+## GitHub Action
+
+It's also available as a GitHub action.
+
+For example:
+
+```yaml
+    - name: S3 Index Generator
+      uses: joshbeard/s3-index-generator@v1
+      with:
+        config: .s3-indexer.yml
+        upload: "true"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-east-1'
+```
+
+Refer to the [`action.yml`](action.yml) for all available inputs, which
+correspond to the CLI arguments and configuration parameters.
 
 ## Configuration
 
