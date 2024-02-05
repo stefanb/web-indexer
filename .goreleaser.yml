@@ -46,5 +46,7 @@ dockers:
     image_templates:
     - joshbeard/s3-index-generator:latest
     - joshbeard/s3-index-generator:{{ .Tag }}
+    - ghrc.io/joshbeard/s3-index-generator:latest
+    - ghrc.io/joshbeard/s3-index-generator:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
