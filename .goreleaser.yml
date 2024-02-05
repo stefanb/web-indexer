@@ -16,11 +16,11 @@ builds:
     #   - "-s -w -X main.version={{.Version}}"
     goos:
       - linux
-      # - darwin
-      # - freebsd
+      - darwin
+      - freebsd
     goarch:
       - amd64
-      # - arm64
+      - arm64
     main: .
     binary: s3-index-generator
 archives:
