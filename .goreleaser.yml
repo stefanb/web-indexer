@@ -1,0 +1,41 @@
+project_name: s3-index-generator
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: "s3-index-generator"
+    env:
+      # goreleaser does not work with CGO, it could also complicate
+      # usage by users in CI/CD systems like Terraform Cloud where
+      # they are unable to install libraries.
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    # ldflags:
+    #   - "-s -w -X main.version={{.Version}}"
+    goos:
+      - linux
+      - darwin
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+    main: .
+    binary: s3-index-generator
+archives:
+  - id: "tarball"
+    builds:
+      - "s3-index-generator"
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files: []
+    #   - src: LICENSE
+    #   - src: README.md
+snapshot:
+  name_template: "{{ .Tag }}-next"
+checksum:
+  name_template: 'checksums.txt'

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+    <style>
+    *, body {
+        padding: 0;
+        margin: 0;
+    }
+    a { text-decoration: none; }
+    a:link { color: #0000EE; }
+    a:visited { color: #551A8B; }
+    a:hover { color: #FF0000; text-decoration: underline; }
+
+    body { font-family: Arial, sans-serif; }
+    h1 {
+        padding: 8px;
+        font-family: Verdana, sans-serif;
+        color: #222;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+        font-family: Consolas, monospace;
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover { background-color: #f5f5f5; }
+
+    @media (prefers-color-scheme: dark) {
+        body { background-color: #1f1f1f; color: #eee; }
+        h1 { color: #eee; }
+        a { text-decoration: none; }
+        a:link { color: #68ce93; }
+        a:hover { color: #e8c26f; }
+        a:visited { color: #d06fe8; }
+        th, td { border-color: #333; }
+        tr:hover { background-color: #333; }
+    }
+
+    @media (prefers-color-scheme: light) {
+        h1 { color: #222; }
+        body { background-color: #ffffff; color: #111; }
+        a { text-decoration: none; }
+        a:linkx { color: #1b4067; }
+        a:hover { color: #792953; }
+        a:visited { color: #62265e; }
+        th, td { border-color: #ddd; }
+        tr:hover { background-color: #e1e1e1; }
+    }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+        </tr>
+        {{ if .HasParent }}
+        <tr>
+            <td class="filename"><a href="../index.html">🔼 Go Up</a></td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+        {{end}}
+        {{range .Items}}
+        <tr>
+            <td class="filename">
+                {{if .IsDir}}
+                📁
+                {{else}}
+                📄
+                {{end}}
+                <a href="{{.URL}}">{{.Name}}</a>
+            </td>
+            <td class="size">
+                {{if not .IsDir}}
+                {{.Size}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+            <td class="date">
+                {{if not .IsDir}}
+                {{.LastModified}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>
