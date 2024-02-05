@@ -64,7 +64,7 @@ For example:
 
 ```yaml
     - name: S3 Index Generator
-      uses: joshbeard/s3-index-generator@v1
+      uses: joshbeard/s3-index-generator@0.1.1
       with:
         config: .s3-indexer.yml
         upload: "true"
