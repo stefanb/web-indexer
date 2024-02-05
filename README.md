@@ -6,7 +6,7 @@ but I needed something like this for a project or two. It's generic enough to
 possibly be useful for others.
 
 <p align="center">
-  <img width="420" height="236" alt="screenshot" src=".github/readme/screenshot.png" />
+  <img width="420" height="236" alt="screenshot" src="https://github.com/joshbeard/s3-index-generator/blob/main/.github/readme/screenshot.png" />
 </p>
 
 The static files generated should be uploaded to the S3 bucket, which can be
