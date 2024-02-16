@@ -54,6 +54,6 @@ jobs:
         with:
           user: ${{ secrets.DOCKERHUB_USERNAME }}
           pass: ${{ secrets.DOCKERHUB_TOKEN }}
-          slug: joshbeard/s3-index-generator
+          slug: joshbeard/web-indexer
           readme: ./README.md
-          description: Generate file indexes for S3 buckets
+          description: Generate file indexes for directories and S3 buckets

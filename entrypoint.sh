@@ -1,20 +1,21 @@
 #!/bin/bash
 
 # Initialize command
-cmd="s3-index-generator"
+cmd="web-indexer"
 
 # Check each expected environment variable and append it to the command if set
-[[ -n "$BUCKET" ]] && cmd="$cmd -bucket $BUCKET"
-[[ -n "$PREFIX" ]] && cmd="$cmd -prefix $PREFIX"
-[[ "$LINK_TO_INDEX" == "true" ]] && cmd="$cmd -link-to-index"
-[[ "$RELATIVE_LINKS" == "true" ]] && cmd="$cmd -relative-links"
+[[ -n "$BASE_URL" ]] && cmd="$cmd --base-url \"$BASE_URL\""
+[[ -n "$CONFIG" ]] && cmd="$cmd --config \"$CONFIG\""
+[[ -n "$DATE_FORMAT" ]] && cmd="$cmd --date-format \"$DATE_FORMAT\""
+[[ -n "$INDEX_FILE" ]] && cmd="$cmd --index-file \"$INDEX_FILE\""
+[[ "$LINK_TO_INDEX" == "true" ]] && cmd="$cmd --link-to-index"
+[[ "$MINIFY" == "true" ]] && cmd="$cmd --minify"
+[[ "$RECURSIVE" == "true" ]] && cmd="$cmd --recursive"
+[[ -n "$SKIP" ]] && cmd="$cmd --skip \"$SKIP\""
+[[ -n "$SOURCE" ]] && cmd="$cmd --source \"$SOURCE\""
+[[ -n "$TARGET" ]] && cmd="$cmd --target \"$TARGET\""
+[[ -n "$TEMPLATE" ]] && cmd="$cmd --template \"$TEMPLATE\""
 [[ -n "$TITLE" ]] && cmd="$cmd -title \"$TITLE\""
-[[ -n "$DATE_FORMAT" ]] && cmd="$cmd -date-format \"$DATE_FORMAT\""
-[[ -n "$URL" ]] && cmd="$cmd -url $URL"
-[[ -n "$STAGING_DIR" ]] && cmd="$cmd -staging-dir $STAGING_DIR"
-[[ -n "$TEMPLATE" ]] && cmd="$cmd -template $TEMPLATE"
-[[ -n "$CONFIG" ]] && cmd="$cmd -config $CONFIG"
-[[ "$UPLOAD" == "true" ]] && cmd="$cmd -upload"
 
 # Debug: Print the command to be executed
 echo "Executing command: $cmd"

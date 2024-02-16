@@ -1,58 +1,65 @@
-name: S3 Index Generator
+name: Web Index Generator
 author: Josh Beard
-description: Generates index files for S3
+description: Generates index files for directories or S3 buckets
 inputs:
-  bucket:
-    description: The name of the S3 bucket
+  base_url:
+    description: base_url specifies a URL to prefix to links, rather than relative links
     required: false
-  prefix:
-    description: prefix is the path/key to start at in the bucket
+  config:
+    description: path to a config file
     required: false
   date_format:
     description: The date format
+    required: false
+  index_file:
+    description: The name of the file to generate
     required: false
   link_to_index:
     description: >
       link to index will link to "index.html" for paths instead of just the path.
       e.g. foo/ vs foo/index.html
     required: false
-  relative_links:
-    description: toggles using relative links or absolute links
+  log_level:
+    description: >
+      The verbosity of output (info, error, warn, debug)
     required: false
-  title:
-    description: title is shown at the top of the pages
+  minify:
+    description: Boolean toggling minification of the generated HTML
+  recursive:
+    description: Index files recursively
+  skip:
+    description: a comma-separated list of files to skip
     required: false
-  url:
-    description: url is used for generating links when relative_links is false
+  source:
+    description: The source directory or S3 URI
     required: false
-  staging_dir:
-    description: staging_dir is used when running without the '-upload' flag.
+  target:
+    description: The target directory or S3 URI
     required: false
   template:
     description: path to a custom Go template to use for the index file
     required: false
-  config:
-    description: path to a config file
-    required: false
-  upload:
-    description: upload to s3 or generate locally
+  title:
+    description: title is shown at the top of the pages
     required: false
 
 runs:
   using: 'docker'
-  image: 'docker://joshbeard/s3-index-generator:latest'
+  image: 'docker://joshbeard/web-indexer:latest'
   env:
-    BUCKET: ${{ inputs.bucket }}
-    PREFIX: ${{ inputs.prefix }}
-    LINK_TO_INDEX: ${{ inputs.link_to_index }}
-    RELATIVE_LINKS: ${{ inputs.relative_links }}
-    TITLE: ${{ inputs.title }}
+    BASE_URL: ${{ inputs.base_url }}
     DATE_FORMAT: ${{ inputs.date_format }}
-    URL: ${{ inputs.url }}
-    STAGING_DIR: ${{ inputs.staging_dir }}
+    INDEX_FILE: ${{ inputs.index_file }}
+    LINK_TO_INDEX: ${{ inputs.link_to_index }}
+    LOG_LEVEL: ${{ inputs.log_level }}
+    MINIFY: ${{ inputs.minify }}
+    RECURSIVE: ${{ inputs.recursive }}
+    SKIP: ${{ inputs.skip }}
+    SOURCE: ${{ inputs.source }}
+    TARGET: ${{ inputs.target }}
     TEMPLATE: ${{ inputs.template }}
+    TITLE: ${{ inputs.title }}
     CONFIG: ${{ inputs.config }}
-    UPLOAD: ${{ inputs.upload }}
 
 branding:
   icon: globe

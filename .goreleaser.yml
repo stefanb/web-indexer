@@ -1,9 +1,9 @@
-project_name: s3-index-generator
+project_name: web-indexer
 before:
   hooks:
     - go mod tidy
 builds:
-  - id: "s3-index-generator"
+  - id: "web-indexer"
     env:
       # goreleaser does not work with CGO, it could also complicate
       # usage by users in CI/CD systems like Terraform Cloud where
@@ -22,11 +22,11 @@ builds:
       - amd64
       - arm64
     main: .
-    binary: s3-index-generator
+    binary: web-indexer
 archives:
   - id: "tarball"
     builds:
-      - "s3-index-generator"
+      - "web-indexer"
     format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
@@ -40,11 +40,11 @@ snapshot:
 checksum:
   name_template: 'checksums.txt'
 dockers:
-  - id: s3-index-generator
+  - id: web-indexer
     ids:
-      - s3-index-generator
+      - web-indexer
     image_templates:
-    - joshbeard/s3-index-generator:latest
-    - joshbeard/s3-index-generator:{{ .Tag }}
+    - joshbeard/web-indexer:latest
+    - joshbeard/web-indexer:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
