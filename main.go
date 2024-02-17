@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/joshbeard/web-index-gen/internal/webindexer"
+	"github.com/joshbeard/web-indexer/internal/webindexer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
