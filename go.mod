@@ -1,4 +1,4 @@
-module github.com/joshbeard/web-index-gen
+module github.com/joshbeard/web-indexer
 
 go 1.21.6
 
