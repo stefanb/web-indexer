@@ -1,373 +1,219 @@
-// Simple program to generate index.html files for an S3 bucket.
 package main
 
 import (
-	_ "embed"
-	"flag"
 	"fmt"
-	"html/template"
-	"math"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"gopkg.in/yaml.v3"
+	"github.com/charmbracelet/log"
+	"github.com/joshbeard/web-index-gen/internal/webindexer"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-//go:embed index.html.tmpl
-var defaultTemplate string
-
-type Config struct {
-	Bucket        string `yaml:"bucket"`
-	Prefix        string `yaml:"prefix"`
-	Title         string `yaml:"title"`
-	Upload        bool   `yaml:"upload"`
-	URL           string `yaml:"url"`
-	LinkToIndexes bool   `yaml:"link_to_index"`
-	RelativeLinks bool   `yaml:"relative_links"`
-	StagingDir    string `yaml:"staging_dir"`
-	DateFormat    string `yaml:"date_format"`
-	Debug         bool   `yaml:"debug"`
-	Template      string `yaml:"template"`
-	cfgFile       string `yaml:"-"`
-}
-
-var cfg Config
-
-// Item represents a file in the S3 bucket.
-type Item struct {
-	Name         string
-	Size         string
-	LastModified string
-	URL          string
-	IsDir        bool
-}
-
-// Data holds the template data.
-type Data struct {
-	Title     string
-	Items     []Item
-	Parent    string
-	HasParent bool
-}
+// version is set at build time using -ldflags
+var version = "dev"
 
 func main() {
-	flag.StringVar(&cfg.cfgFile, "config", "", "The path to an optional config file")
-	flag.StringVar(&cfg.Bucket, "bucket", "", "The name of the S3 bucket")
-	flag.StringVar(&cfg.Prefix, "prefix", "", "The path within the bucket to list")
-	flag.StringVar(&cfg.Title, "title", "", "The title of the index page")
-	flag.BoolVar(&cfg.Upload, "upload", false, "Upload a file to the S3 bucket")
-	flag.StringVar(&cfg.URL, "url", "", "The URL of the S3 bucket")
-	flag.BoolVar(&cfg.LinkToIndexes, "link-to-index", false,
-		"Link to index.html or just the path")
-	flag.BoolVar(&cfg.RelativeLinks, "relative-links", false,
-		"Use relative links instead of absolute links")
-	flag.StringVar(&cfg.StagingDir, "staging-dir", "_staging",
-		"The directory to use for staging files (when not uploading)")
-	flag.StringVar(&cfg.DateFormat, "date-format", "2006-01-02 15:04:05 MST",
-		"The date format to use in the index page")
-	flag.BoolVar(&cfg.Debug, "debug", false, "Print debug information")
-	flag.StringVar(&cfg.Template, "template", "",
-		"A custom template file to use for the index page")
-	flag.Parse()
+	var cfg webindexer.Config
+	rootCmd := &cobra.Command{
+		Use:     "web-indexer [flags]",
+		Version: version,
+		Short:   "Generate index files for a directory or S3 bucket",
+		Long: "web-indexer is a tool to generate index files for a directory or S3 bucket.\n\n" +
+			"See https://github.com/joshbeard/web-indexer for more information.\n\n" +
+			"The source and target can be specified using their flags or as " +
+			"the\nfirst and second arguments.\n\nA custom configuration file can be " +
+			"specified using the --config flag.\nBy default, web-indexer will look " +
+			"for a .web-indexer.yml or .web-indexer.yaml\nfile in the current directory.",
+		Example: strings.Join([]string{
+			"  Index a local directory and write the index file to the same directory",
+			"    web-indexer --source /path/to/directory --target /path/to/directory",
+			"  Index a local directory and write the index file to a different directory",
+			"    web-indexer --source /path/to/directory --target /foo/bar",
+			"  Index a local directory and upload the index file to an S3 bucket",
+			"    web-indexer --source /path/to/directory --target s3://bucket/path",
+			"  Index an S3 bucket and write the index file to a local directory",
+			"    web-indexer --source s3://bucket/path --target /path/to/directory",
+			"  Index an S3 bucket and upload the index file to the same bucket and path",
+			"    web-indexer --source s3://bucket/path --target s3://bucket/path",
+			"",
+			"  Run with a custom configuration file",
+			"    web-indexer -c custom.yml /path/to/source /path/to/target",
+			"",
+			"  Set a title for the index pages",
+			"    web-indexer \\",
+			"      --source /path/to/directory \\",
+			"      --target /path/to/directory \\",
+			"      --title 'Index of {relativePath}'",
+		}, "\n"),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := viper.Unmarshal(&cfg)
+			cobra.CheckErr(err)
 
-	// Set the configuration based on the command-line flags and the optional
-	// config file. The CLI flags take precedence over the config file.
-	setConfig()
+			// If 2 arguments are passed, the first is the source and the
+			// second is the target
+			if len(args) == 2 {
+				cfg.Source = args[0]
+				cfg.Target = args[1]
+			} else if len(args) > 0 {
+				log.Fatalf("Unknown arguments: %s", args)
+			}
 
-	debug("Config: %+v\n", cfg)
+			if err := setupLogger(cfg); err != nil {
+				log.Fatalf("Failed to setup logger: %s", err)
+			}
 
-	if cfg.Bucket == "" || cfg.URL == "" {
-		flag.Usage()
-		os.Exit(1)
+			indexer, err := webindexer.New(cfg)
+			cobra.CheckErr(err)
+
+			log.Infof("Generating index for %s", cfg.Source)
+			err = indexer.Generate(indexer.Cfg.BasePath)
+			cobra.CheckErr(err)
+		},
 	}
 
-	cfg.Prefix = strings.Trim(cfg.Prefix, "/")
-	if cfg.Prefix != "" && !strings.HasSuffix(cfg.Prefix, "/") {
-		cfg.Prefix += "/"
-	}
+	err := setFlags(rootCmd, &cfg)
+	cobra.CheckErr(err)
 
-	sess := session.Must(session.NewSession())
-	svc := s3.New(sess)
-
-	// Generate index.html files for each directory
-	generateIndexes(svc, cfg.Bucket, cfg.Prefix, cfg.URL)
-
-	fmt.Println("Index pages generated successfully.")
+	err = rootCmd.Execute()
+	cobra.CheckErr(err)
 }
 
-func generateIndexes(svc *s3.S3, bucket, prefix, url string) {
-	req := &s3.ListObjectsV2Input{
-		Bucket:    aws.String(bucket),
-		Prefix:    aws.String(prefix),
-		Delimiter: aws.String("/"),
-	}
-
-	resp, err := svc.ListObjectsV2(req)
-	if err != nil {
-		panic(err)
-	}
-
-	// Prepare data for the template
-	var items []Item
-	for _, content := range resp.Contents {
-		if *content.Key == prefix || strings.HasSuffix(*content.Key, "index.html") {
-			continue
-		}
-
-		itemName := filepath.Base(*content.Key)
-		item := Item{
-			Name:         itemName,
-			Size:         humanizeBytes(*content.Size),
-			LastModified: content.LastModified.Format(cfg.DateFormat),
-			IsDir:        false,
-		}
-
-		if cfg.RelativeLinks {
-			item.URL = itemName
+func initConfig(cfgFile *string) func() {
+	return func() {
+		if *cfgFile != "" {
+			viper.SetConfigFile(*cfgFile)
 		} else {
-			item.URL = url + "/" + *content.Key
+			// Look for a .web-indexer.yml or .web-indexer.yaml file in the
+			// current directory
+			for _, name := range []string{".web-indexer.yml", ".web-indexer.yaml"} {
+				if _, err := os.Stat(name); err == nil {
+					viper.SetConfigFile(name)
+					break
+				}
+			}
 		}
 
-		items = append(items, item)
-	}
+		// Environment variables
+		viper.AutomaticEnv()
 
-	for _, commonPrefix := range resp.CommonPrefixes {
-		dirName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
-		item := Item{
-			Name:  dirName,
-			IsDir: true,
+		if err := viper.ReadInConfig(); err == nil {
+			log.Debugf("Using config file: %s", viper.ConfigFileUsed())
 		}
+	}
+}
 
-		if cfg.RelativeLinks {
-			item.URL = dirName
-		} else {
-			item.URL = url + "/" + *commonPrefix.Prefix
-		}
+func setFlags(rootCmd *cobra.Command, cfg *webindexer.Config) error {
+	cobra.OnInitialize(initConfig(&cfg.CfgFile))
 
-		if cfg.LinkToIndexes {
-			item.URL += "index.html"
-		}
+	rootCmd.PersistentFlags().StringVarP(&cfg.CfgFile, "config", "c", "", "config file")
 
-		items = append(items, item)
+	rootCmd.Flags().StringVarP(&cfg.BaseURL, "base-url", "u", "", "A URL to prepend to the links")
+	if err := viper.BindPFlag("base-url", rootCmd.Flags().Lookup("base-url")); err != nil {
+		return err
 	}
 
-	data := Data{
-		Title: cfg.Title + " - " + prefix,
-		Items: items,
+	rootCmd.Flags().StringVarP(&cfg.DateFormat, "date-format", "", "2006-01-02 15:04:05 MST", "The date format to use in the index page")
+	if err := viper.BindPFlag("date-format", rootCmd.Flags().Lookup("date-format")); err != nil {
+		return err
 	}
 
-	parent := filepath.Dir(strings.TrimSuffix(prefix, "/"))
-	if prefix != "" {
-		data.HasParent = true
+	rootCmd.Flags().StringVarP(&cfg.IndexFile, "index-file", "i", "index.html", "The name of the index file")
+	if err := viper.BindPFlag("index-file", rootCmd.Flags().Lookup("index-file")); err != nil {
+		return err
 	}
 
-	if cfg.RelativeLinks {
-		data.Parent = "../"
-	} else {
-		data.Parent = url + "/" + parent
+	rootCmd.Flags().BoolVarP(&cfg.LinkToIndexes, "link-to-index", "l", false, "Link to the index file or just the path")
+	if err := viper.BindPFlag("link-to-index", rootCmd.Flags().Lookup("link-to-index")); err != nil {
+		return err
 	}
 
-	if cfg.LinkToIndexes {
-		data.Parent += "index.html"
+	rootCmd.Flags().StringVarP(&cfg.LogLevel, "log-level", "L", "info", "The log level")
+	if err := viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level")); err != nil {
+		return err
 	}
 
-	// Sort directories first, then files by their last modified date.
-	// This is a simple way to make the index page more readable.
-	sort.SliceStable(data.Items, func(i, j int) bool {
-		if data.Items[i].IsDir && !data.Items[j].IsDir {
-			return true
-		}
-		if !data.Items[i].IsDir && data.Items[j].IsDir {
+	rootCmd.Flags().StringVarP(&cfg.LogFile, "log-file", "F", "", "The log file")
+	if err := viper.BindPFlag("log-file", rootCmd.Flags().Lookup("log-file")); err != nil {
+		return err
+	}
 
-			return false
-		}
-		return data.Items[i].Name < data.Items[j].Name
-	})
+	rootCmd.Flags().BoolVarP(&cfg.Minify, "minify", "m", false, "Minify the index page")
+	if err := viper.BindPFlag("minify", rootCmd.Flags().Lookup("minify")); err != nil {
+		return err
+	}
 
-	var tmpl *template.Template
-	if cfg.Template != "" {
-		debug("Using custom template %s\n", cfg.Template)
-		tmplStr, err := os.ReadFile(cfg.Template)
+	rootCmd.Flags().BoolVarP(&cfg.Quiet, "quiet", "q", false, "Suppress log output")
+	if err := viper.BindPFlag("quiet", rootCmd.Flags().Lookup("quiet")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().BoolVarP(&cfg.Recursive, "recursive", "r", false, "List files recursively")
+	if err := viper.BindPFlag("recursive", rootCmd.Flags().Lookup("recursive")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().StringSliceVarP(&cfg.Skips, "skip", "S", []string{}, "A list of files or directories to skip. "+
+		"Comma separated or specified multiple times")
+	if err := viper.BindPFlag("skip", rootCmd.Flags().Lookup("skip")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().StringVarP(&cfg.Source, "source", "s", "", "REQUIRED. The source directory or S3 URI to list")
+	if err := viper.BindPFlag("source", rootCmd.Flags().Lookup("source")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().StringVarP(&cfg.Target, "target", "t", "", "REQUIRED. The target directory or S3 URI to write to")
+	if err := viper.BindPFlag("target", rootCmd.Flags().Lookup("target")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().StringVarP(&cfg.Template, "template", "f", "", "A custom template file to use for the index page")
+	if err := viper.BindPFlag("template", rootCmd.Flags().Lookup("template")); err != nil {
+		return err
+	}
+
+	rootCmd.Flags().StringVarP(&cfg.Title, "title", "T", "", "The title of the index page")
+	if err := viper.BindPFlag("title", rootCmd.Flags().Lookup("title")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setupLogger(cfg webindexer.Config) error {
+	if cfg.LogLevel == "" || cfg.Quiet {
+		devnull, err := os.Open(os.DevNull)
 		if err != nil {
-			panic(err)
-		}
-		tmpl, err = template.New("index").Parse(string(tmplStr))
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		debug("Using default template\n")
-		tmpl, err = template.New("index").Parse(defaultTemplate)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	// Generate and optionally upload each index.html
-	for _, cp := range resp.CommonPrefixes {
-		generateIndexes(svc, bucket, *cp.Prefix, url)
-	}
-
-	generateOrUploadIndex(svc, bucket, prefix, data, tmpl)
-}
-
-func generateOrUploadIndex(svc *s3.S3, bucket, prefix string, data Data, tmpl *template.Template) {
-	if cfg.Upload {
-		wr := new(strings.Builder)
-		if err := tmpl.Execute(wr, data); err != nil {
-			panic(err)
+			return err
 		}
 
-		wrStr := minifyHTML(wr.String())
+		log.SetOutput(devnull)
 
-		debug("Uploading index.html to %s/%sindex.html\n", bucket, prefix)
-		if err := uploadToS3(svc, bucket, wrStr, prefix+"index.html"); err != nil {
-			panic(err)
-		}
-	} else {
-		// Define the local directory structure based on the prefix
-		localPath := filepath.Join(cfg.StagingDir, bucket, prefix)
-		if err := os.MkdirAll(localPath, 0755); err != nil {
-			panic(fmt.Errorf("failed to create directory %s: %w", localPath, err))
-		}
-
-		filePath := filepath.Join(localPath, "index.html")
-		file, err := os.Create(filePath)
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-
-		if err := tmpl.Execute(file, data); err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("Index page generated successfully at %s\n", filePath)
-	}
-}
-
-func uploadToS3(svc *s3.S3, bucket, content, dst string) error {
-	r := strings.NewReader(content)
-	_, err := svc.PutObject(&s3.PutObjectInput{
-		Bucket:          aws.String(bucket),
-		Key:             aws.String(dst),
-		Body:            aws.ReadSeekCloser(r),
-		ContentType:     aws.String("text/html"),
-		ContentEncoding: aws.String("utf-8"),
-	})
-	return err
-}
-
-// HumanizeBytes converts bytes to a human-readable format.
-func humanizeBytes(bytes int64) string {
-	units := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"}
-	if bytes < 10 {
-		return fmt.Sprintf("%d B", bytes)
-	}
-	log := math.Log(float64(bytes)) / math.Log(1024)
-	index := int(log)
-	size := float64(bytes) / math.Pow(1024, float64(index))
-	return fmt.Sprintf("%.2f %s", size, units[index])
-}
-
-// setConfig reads an optional setConfig file and overwrites the default values with
-// command-line flags.
-// This sets the global args variable.
-func setConfig() {
-	config := Config{}
-	if cfg.cfgFile != "" {
-		config = readConfig()
+		return nil
 	}
 
-	// Overwrite config file values with command-line flags
-	if cfg.Bucket != "" {
-		config.Bucket = cfg.Bucket
-	}
-
-	if cfg.Prefix != "" {
-		config.Prefix = cfg.Prefix
-	}
-
-	if cfg.Title != "" {
-		config.Title = cfg.Title
-	}
-
-	if cfg.URL != "" {
-		config.URL = cfg.URL
-	}
-
-	if cfg.LinkToIndexes {
-		config.LinkToIndexes = cfg.LinkToIndexes
-	}
-
-	if cfg.RelativeLinks {
-		config.RelativeLinks = cfg.RelativeLinks
-	}
-
-	if cfg.StagingDir != "" {
-		config.StagingDir = cfg.StagingDir
-	}
-
-	if cfg.DateFormat != "" {
-		config.DateFormat = cfg.DateFormat
-	}
-
-	if cfg.Debug {
-		config.Debug = cfg.Debug
-	}
-
-	if cfg.Upload {
-		config.Upload = cfg.Upload
-	}
-
-	if cfg.Template != "" {
-		config.Template = cfg.Template
-	}
-
-	cfg = config
-}
-
-func readConfig() Config {
-	config := Config{}
-	// Check if the config file exists
-	if _, err := os.Stat(cfg.cfgFile); os.IsNotExist(err) {
-		fmt.Printf("Config file %s does not exist\n", cfg.cfgFile)
-		os.Exit(1)
-	}
-
-	// Read the config file.
-	fmt.Printf("Reading configuration from %s\n", cfg.cfgFile)
-	file, err := os.Open(cfg.cfgFile)
+	logLevel, err := log.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return fmt.Errorf("unable to parse log level: %w", err)
 	}
 
-	decoder := yaml.NewDecoder(file)
-	err = decoder.Decode(&config)
+	log.SetLevel(logLevel)
+
+	if cfg.LogFile == "" {
+		log.SetOutput(os.Stdout)
+
+		return nil
+	}
+
+	f, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
+	} else {
+		log.SetOutput(f)
 	}
 
-	return config
-}
-
-func minifyHTML(str string) string {
-	str = strings.ReplaceAll(str, "\n", "")
-	str = strings.ReplaceAll(str, "\t", "")
-	str = strings.ReplaceAll(str, "  ", "")
-	str = strings.ReplaceAll(str, "> <", "><")
-	return str
-}
-
-func debug(msg string, args ...interface{}) {
-	if cfg.Debug {
-		fmt.Printf(msg, args...)
-	}
+	return nil
 }

@@ -52,7 +52,10 @@
     <meta charset="UTF-8">
 </head>
 <body>
-    <h1>{{.Title}}</h1>
+    {{ if .Title }}
+    <h1>{{ .Title }}</h1>
+    {{ end }}
+
     <table>
         <tr>
             <th>Name</th>
