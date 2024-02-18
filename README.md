@@ -115,6 +115,25 @@ For example:
         AWS_REGION: 'us-east-1'
 ```
 
+Example of using this more manually, such as with a private runner with a
+volume mounted from outside the workspace. This example expects a
+`.web-indexer.yml` config to exist in the repository's root and is passing in
+the AWS variables for an S3 target:
+
+```yaml
+      - name: Web Index Generator
+        run: |
+          docker run --rm \
+            -v /mnt/repos:/mnt/repos \
+            -v ${PWD}:/workspace \
+            -w /workspace \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            -e AWS_REGION='us-east-1' \
+            -e CONFIG=.web-indexer.yml \
+            joshbeard/web-indexer:latest
+```
+
 Refer to the [`action.yml`](action.yml) for all available inputs, which
 correspond to the CLI arguments and configuration parameters.
 
