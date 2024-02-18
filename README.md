@@ -105,14 +105,18 @@ It's also available as a GitHub action.
 For example:
 
 ```yaml
-    - name: S3 Index Generator
-      uses: joshbeard/web-indexer@0.1.1
-      with:
-        config: .web-indexer.yml
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: 'us-east-1'
+jobs:
+  build:
+    steps:
+      # ... Other config ...
+      - name: S3 Index Generator
+        uses: joshbeard/web-indexer@0.1.1
+        with:
+          config: .web-indexer.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-east-1'
 ```
 
 Example of using this more manually, such as with a private runner with a
@@ -121,6 +125,10 @@ volume mounted from outside the workspace. This example expects a
 the AWS variables for an S3 target:
 
 ```yaml
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
       - name: Web Index Generator
         run: |
           docker run --rm \
