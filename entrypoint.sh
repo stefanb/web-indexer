@@ -22,4 +22,4 @@ cmd="web-indexer"
 echo "Executing command: $cmd"
 
 # Execute the constructed command
-eval $cmd
+eval $cmd $@
