@@ -3,7 +3,7 @@ module github.com/joshbeard/web-indexer
 go 1.21.6
 
 require (
-	github.com/aws/aws-sdk-go v1.50.15
+	github.com/aws/aws-sdk-go v1.50.20
 	github.com/charmbracelet/log v0.3.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
