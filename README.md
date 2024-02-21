@@ -145,6 +145,21 @@ jobs:
 Refer to the [`action.yml`](action.yml) for all available inputs, which
 correspond to the CLI arguments and configuration parameters.
 
+## GitLab CI
+
+```yaml
+web-index:
+  image:
+    name: joshbeard/web-indexer
+    entrypoint: ['']
+  variables:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: 'us-east-1'
+  script:
+    web-indexer
+```
+
 ## Configuration
 
 You can configure the behavior of `web-indexer` using command-line arguments

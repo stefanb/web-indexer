@@ -5,15 +5,12 @@ before:
 builds:
   - id: "web-indexer"
     env:
-      # goreleaser does not work with CGO, it could also complicate
-      # usage by users in CI/CD systems like Terraform Cloud where
-      # they are unable to install libraries.
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
-    # ldflags:
-    #   - "-s -w -X main.version={{.Version}}"
+    ldflags:
+      - "-s -w -X main.version={{.Version}}"
     goos:
       - linux
       - darwin
@@ -39,12 +36,53 @@ snapshot:
   name_template: "{{ .Tag }}-next"
 checksum:
   name_template: 'checksums.txt'
+signs:
+  - artifacts: all
+    args:
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
 dockers:
   - id: web-indexer
     ids:
       - web-indexer
     image_templates:
-    - joshbeard/web-indexer:latest
-    - joshbeard/web-indexer:{{ .Tag }}
+      - joshbeard/web-indexer:latest
+      - joshbeard/web-indexer:{{ .Tag }}
+      - ghcr.io/joshbeard/web-indexer/web-indexer:latest
+      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+    use: buildx
+nfpms:
+  - vendor: "Josh Beard"
+    maintainer: "Josh Beard <josh@jbeard.dev>"
+    homepage: "http://github.com/joshbeard/web-indexer"
+    license: "MIT"
+    description: Generate static indexes for local paths and S3 buckets
+    #prerelease: beta1
+    release: "1"
+    priority: "extra"
+    section: vcs
+    formats:
+      - apk
+      - deb
+      - rpm
+      - archlinux
+    rpm:
+      signature:
+        key_file: key.gpg
+    deb:
+      signature:
+        key_file: key.gpg
+    # FIXME: gpg signing apk
+    apk: {}
+    archlinux:
+      packager: Josh Beard <josh@jbeard.dev>

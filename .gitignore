@@ -3,3 +3,4 @@ dist
 *.tar.gz
 index.html
 _staging
+key.gpg
