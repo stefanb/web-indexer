@@ -45,7 +45,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'docker://joshbeard/web-indexer:latest'
+  image: ghcr.io/joshbeard/web-indexer/web-indexer:latest
   env:
     BASE_URL: ${{ inputs.base_url }}
     DATE_FORMAT: ${{ inputs.date_format }}
