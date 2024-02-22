@@ -2,9 +2,6 @@
 
 Quick and simple program to generate basic directory index pages from a local
 file directory or S3 bucket, such as a file listing page.
-Nothing revolutionary, but I needed something like this for a project or two.
-It's generic enough to possibly be useful for others. S3 doesn't provide
-file list indexes natively.
 
 <p align="center">
   <img width="420" height="236" alt="screenshot" src=".github/readme/screenshot.png" />
@@ -12,16 +9,21 @@ file list indexes natively.
 
 This isn't a good solution for a dynamic listing of an S3 bucket (maybe try
 Lambda), but it's simple and works for content that remains static between
-deployments. If you're using Nginx, [fancyindex](https://www.nginx.com/resources/wiki/modules/fancy_index/)
-does this dynamically with full customization. If you're using Apache,
-[mod_autoindex](https://httpd.apache.org/docs/2.4/mod/mod_autoindex.html) is
+deployments. This is particularly helpful for hosting static artifacts on S3,
+since S3 doesn't natively offer content indexes.
+
+If you're using Nginx, [fancy_index](https://www.nginx.com/resources/wiki/modules/fancy_index/)
+is the right tool for the job and does this dynamically with full customization.
+If you're using Apache, [mod_autoindex](https://httpd.apache.org/docs/2.4/mod/mod_autoindex.html) is
 what you're looking for, maybe with something like [Apaxy](https://oupala.github.io/apaxy/).
 
 ## Usage
 
-Download from the [releases](https://github.com/joshbeard/web-indexer/releases)
-or use the [`joshbeard/web-indexer`](https://hub.docker.com/r/joshbeard/web-indexer)
-Docker image.
+Download packages from the [releases](https://github.com/joshbeard/web-indexer/releases),
+use the Docker image from
+[`ghcr.io/joshbeard/web-indexer/web-indexer`](https://github.com/joshbeard/web-indexer/pkgs/container/web-indexer%2Fweb-indexer)
+or [`joshbeard/web-indexer`](https://hub.docker.com/r/joshbeard/web-indexer) on
+the Docker Hub, use the [GitHub Action](#github-action) or a [GitLab job](#gitlab-ci).
 
 ```plain
 Usage:
@@ -139,7 +141,7 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION='us-east-1' \
             -e CONFIG=.web-indexer.yml \
-            joshbeard/web-indexer:latest
+            ghcr.io/joshbeard/web-indexer/web-indexer:0.3.0
 ```
 
 Refer to the [`action.yml`](action.yml) for all available inputs, which
