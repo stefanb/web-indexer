@@ -62,7 +62,8 @@ dockers:
       - "--platform=linux/amd64"
     use: buildx
 nfpms:
-  - vendor: "Josh Beard"
+  - id: 'testpkg'
+    vendor: "Josh Beard"
     maintainer: "Josh Beard <josh@jbeard.dev>"
     homepage: "http://github.com/joshbeard/web-indexer"
     license: "MIT"
