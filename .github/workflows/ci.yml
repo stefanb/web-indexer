@@ -56,6 +56,9 @@ jobs:
           NFPM_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
           NFPM_TESTPKG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
 
+      - name: Test packages
+        run: ./tests/packages/run-tests.sh
+
   docker-hub-doc:
     name: Publish DockerHub Readme
     runs-on: ubuntu-latest
