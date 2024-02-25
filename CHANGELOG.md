@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 - 2024-02-25
+
+- feature: sorting and tests @joshbeard (#6)
+- ci: Add release drafter, changelog, and test stub-ins @joshbeard (#4)
+
 ## 0.3.1 (2024-02-21)
 
 * Add package tests
