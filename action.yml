@@ -11,6 +11,9 @@ inputs:
   date_format:
     description: The date format
     required: false
+  dirs_first:
+    description: List directories first (default true)
+    required: false
   index_file:
     description: The name of the file to generate
     required: false
@@ -25,10 +28,16 @@ inputs:
     required: false
   minify:
     description: Boolean toggling minification of the generated HTML
+  order:
+    description: The order for the items. One of asc, desc (default "asc")
+    required: false
   recursive:
     description: Index files recursively
   skip:
     description: a comma-separated list of files to skip
+    required: false
+  sort_by:
+    description: The order for the index page. One of last_modified, name, natural_name (default "natural_name")
     required: false
   source:
     description: The source directory or S3 URI
@@ -49,12 +58,15 @@ runs:
   env:
     BASE_URL: ${{ inputs.base_url }}
     DATE_FORMAT: ${{ inputs.date_format }}
+    DIRS_FIRST: ${{ inputs.dirs_first }}
     INDEX_FILE: ${{ inputs.index_file }}
     LINK_TO_INDEX: ${{ inputs.link_to_index }}
     LOG_LEVEL: ${{ inputs.log_level }}
     MINIFY: ${{ inputs.minify }}
+    ORDER: ${{ inputs.order }}
     RECURSIVE: ${{ inputs.recursive }}
     SKIP: ${{ inputs.skip }}
+    SORT: ${{ inputs.sort }}
     SOURCE: ${{ inputs.source }}
     TARGET: ${{ inputs.target }}
     TEMPLATE: ${{ inputs.template }}
