@@ -208,7 +208,7 @@ func setupLogger(cfg webindexer.Config) error {
 		return nil
 	}
 
-	f, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(cfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	} else {

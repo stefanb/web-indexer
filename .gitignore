@@ -4,3 +4,6 @@ dist
 index.html
 _staging
 key.gpg
+coverage.txt
+coverage.html
+coverage.xml
