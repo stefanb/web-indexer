@@ -116,7 +116,7 @@ jobs:
     steps:
       # ... Other config ...
       - name: S3 Index Generator
-        uses: joshbeard/web-indexer@0.1.1
+        uses: joshbeard/web-indexer@0.4.1
         with:
           config: .web-indexer.yml
         env:
@@ -145,7 +145,7 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_REGION='us-east-1' \
             -e CONFIG=.web-indexer.yml \
-            ghcr.io/joshbeard/web-indexer/web-indexer:0.3.0
+            ghcr.io/joshbeard/web-indexer/web-indexer:latest
 ```
 
 Refer to the [`action.yml`](action.yml) for all available inputs, which
