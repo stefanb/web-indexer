@@ -55,7 +55,6 @@ func (l *LocalBackend) Write(data Data, content string) error {
 	localPath := filepath.Join(l.cfg.Target, prefix)
 	if err := os.MkdirAll(localPath, 0o750); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", localPath, err)
-
 	}
 
 	filePath := filepath.Join(localPath, l.cfg.IndexFile)

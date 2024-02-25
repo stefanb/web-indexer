@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"html/template"
 	"math"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,10 +22,11 @@ var defaultTemplate string
 
 // Indexer is the main struct for the webindexer package.
 type Indexer struct {
-	Cfg    Config
-	Source FileSource
-	Target FileSource
-	s3     *s3.S3
+	Cfg          Config
+	Source       FileSource
+	Target       FileSource
+	s3           *s3.S3
+	BackendSetup BackendSetup
 }
 
 // FileSource is an interface for listing the contents of a directory or S3
@@ -56,24 +58,53 @@ type Data struct {
 	HasParent    bool
 }
 
+type BackendSetup interface {
+	Setup(indexer *Indexer) error
+}
+
+type defaultBackendSetup struct{}
+
+func (d defaultBackendSetup) Setup(indexer *Indexer) error {
+	return setupBackends(indexer)
+}
+
 // New creates a new Indexer, taking the initial configuration and returning a
 // updating it with the service, source and target paths.
 func New(cfg Config) (*Indexer, error) {
-	indexer := &Indexer{Cfg: cfg}
+	indexer := &Indexer{
+		Cfg:          cfg,
+		BackendSetup: defaultBackendSetup{},
+	}
 
 	if err := indexer.Cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	if err := setupBackends(indexer); err != nil {
+	if err := indexer.BackendSetup.Setup(indexer); err != nil {
 		return nil, err
 	}
 
 	return indexer, nil
 }
 
+func joinURL(baseURL string, parts ...string) (string, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	joinedPath := path.Join(parts...)
+	u.Path = path.Join(u.Path, joinedPath)
+
+	return u.String(), nil
+}
+
 func resolveParentPath(baseURL, parent, indexFile string, linkToIndexes bool) string {
-	parentURL := strings.TrimSuffix(filepath.Join(baseURL, parent), "/") + "/"
+	parentURL, err := joinURL(baseURL, parent)
+	if err != nil {
+		log.Error("Error joining URL:", err)
+	}
+
 	if linkToIndexes {
 		parentURL += indexFile
 	}
@@ -81,9 +112,13 @@ func resolveParentPath(baseURL, parent, indexFile string, linkToIndexes bool) st
 }
 
 func resolveItemURL(baseURL, path, name string, isDir, linkToIndexes bool, indexFile string) string {
+	var err error
 	url := name
 	if baseURL != "" {
-		url = filepath.Join(baseURL, path, name)
+		url, err = joinURL(baseURL, path, name)
+		if err != nil {
+			log.Error("Error joining URL:", err)
+		}
 	}
 
 	if isDir {
@@ -93,18 +128,6 @@ func resolveItemURL(baseURL, path, name string, isDir, linkToIndexes bool, index
 		}
 	}
 	return url
-}
-
-func sortItems(items *[]Item) {
-	sort.SliceStable(*items, func(i, j int) bool {
-		if (*items)[i].IsDir && !(*items)[j].IsDir {
-			return true
-		}
-		if !(*items)[i].IsDir && (*items)[j].IsDir {
-			return false
-		}
-		return (*items)[i].Name < (*items)[j].Name
-	})
 }
 
 // setupBackends sets up the source and target backends for the indexer.
@@ -240,7 +263,7 @@ func (i Indexer) data(items []Item, path string) (Data, error) {
 		data.Items = append(data.Items, item)
 	}
 
-	sortItems(&data.Items)
+	i.sort(&data.Items)
 	return data, nil
 }
 
