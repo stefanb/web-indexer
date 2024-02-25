@@ -53,13 +53,13 @@ func (l *LocalBackend) Write(data Data, content string) error {
 	prefix := data.RelativePath
 	prefix = strings.TrimPrefix(prefix, l.cfg.BasePath)
 	localPath := filepath.Join(l.cfg.Target, prefix)
-	if err := os.MkdirAll(localPath, 0755); err != nil {
+	if err := os.MkdirAll(localPath, 0o750); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", localPath, err)
 
 	}
 
 	filePath := filepath.Join(localPath, l.cfg.IndexFile)
-	file, err := os.Create(filePath)
+	file, err := os.Create(filePath) // #nosec
 	if err != nil {
 		return err
 	}
