@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 - 2024-02-25
+
+- Update GitHub action for sort, order @joshbeard (#7)
+- build(deps): bump the go_modules group group with 1 update @dependabot (#5)
+
 ## 0.4.0 - 2024-02-25
 
 - feature: sorting and tests @joshbeard (#6)
