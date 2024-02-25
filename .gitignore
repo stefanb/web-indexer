@@ -7,3 +7,4 @@ key.gpg
 coverage.txt
 coverage.html
 coverage.xml
+checkstyle-report.xml
