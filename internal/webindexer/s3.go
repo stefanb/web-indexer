@@ -11,9 +11,14 @@ import (
 )
 
 type S3Backend struct {
-	svc    *s3.S3
+	svc    S3API
 	bucket string
 	cfg    Config
+}
+
+type S3API interface {
+	ListObjectsV2(input *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error)
+	PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error)
 }
 
 func (s *S3Backend) Read(prefix string) ([]Item, error) {
@@ -43,6 +48,7 @@ func (s *S3Backend) Read(prefix string) ([]Item, error) {
 
 	var items []Item
 	for _, content := range resp.Contents {
+		log.Debugf("Found object: %s", *content.Key)
 		if shouldSkip(*content.Key, s.cfg.IndexFile, s.cfg.Skips) {
 			continue
 		}
@@ -59,6 +65,7 @@ func (s *S3Backend) Read(prefix string) ([]Item, error) {
 	}
 
 	for _, commonPrefix := range resp.CommonPrefixes {
+		log.Debugf("Found common prefix: %s", *commonPrefix.Prefix)
 		dirName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
 		item := Item{
 			Name:  dirName,

@@ -23,9 +23,3 @@ repos:
       entry: gofmt -w .
       language: system
       files: '.*\.go$'
-    - id: docs
-      name: docs
-      description: Run make docs to generate docs
-      entry: make docs
-      language: system
-      files: '(.*\.go|examples\/.*)'

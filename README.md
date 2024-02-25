@@ -33,19 +33,23 @@ Flags:
   -u, --base-url string      A URL to prepend to the links
   -c, --config string        config file
       --date-format string   The date format to use in the index page (default "2006-01-02 15:04:05 MST")
+      --dirs-first           List directories first (default true)
   -h, --help                 help for web-indexer
   -i, --index-file string    The name of the index file (default "index.html")
   -l, --link-to-index        Link to the index file or just the path
   -F, --log-file string      The log file
   -L, --log-level string     The log level (default "info")
   -m, --minify               Minify the index page
+      --order string         The order for the items. One of: asc, desc (default "asc")
   -q, --quiet                Suppress log output
   -r, --recursive            List files recursively
   -S, --skip strings         A list of files or directories to skip. Comma separated or specified multiple times
+      --sort-by string       The order for the index page. One of: last_modified, name, natural_name (default "natural_name")
   -s, --source string        REQUIRED. The source directory or S3 URI to list
   -t, --target string        REQUIRED. The target directory or S3 URI to write to
   -f, --template string      A custom template file to use for the index page
   -T, --title string         The title of the index page
+  -v, --version              version for web-indexer
 ```
 
 ### Examples
@@ -168,15 +172,26 @@ You can configure the behavior of `web-indexer` using command-line arguments
 and/or a YAML config file. Both are evaluated with the command-line arguments
 taking precedence.
 
+Configuration files named `.web-indexer.yml` or `.web-indexer.yaml` in the
+current working directory will be automatically loaded.
+
+The full configuration with default values for each key are provided below:
+
 ```yaml
 # base_url is an optional URL to prefix to links. If unset, links are relative.
 base_url: ""
 
 # date_format is the date format to use for indexed files modified time.
-date_format: 2006-01-02 15:04:05 UTC
+# This is provided in Go's `time` package format.
+# See https://pkg.go.dev/time#pkg-examples
+date_format: "2006-01-02 15:04:05 UTC"
+
+# dirs_first toggles if directories should be ordered before files in the
+# list.
+dirs_first: true
 
 # index_file is the name of the file to generate.
-index_file: index.html
+index_file: "index.html"
 
 # link_to_index toggles linking to the index_file for sub-paths or just the
 # root of the subpath (foo/ vs foo/index.html).
@@ -198,20 +213,28 @@ minify: false
 # quiet suppresses all log output
 quiet: false
 
+# order the items (asc)ending or (desc)ending (by sort).
+order: "asc"
+
 # recursive enables indexing the source recursively.
 recursive: false
 
 # skips is a list of filenames to skip.
 skips: []
 
+# sort_by determines how the items are sorted.
+# Valid values: last_modified, name, name_natural
+# name_natural sorts by name in a human friendly way (e.g. 1,2,10 not 1,10,2).
+sort_by: "name_natural"
+
 # source is the path to a local directory or an S3 URI.
-source: blah/
+source: "blah/"
 
 # target is the path to a local directory or an S3 URI.
-target: blah/
+target: "blah/"
 
 # template is the path to a local Go template file to use for generating the
-# indexes.
+# indexes. The built-in template is used by default.
 template: ""
 
 # title customizes the title field available in the template.
@@ -232,4 +255,5 @@ title: "Index of {relativePath}"
 minify: true
 recursive: true
 link_to_index: true
+order: desc
 ```
