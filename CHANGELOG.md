@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.2 - 2024-06-26
+
+- build(deps): bump github.com/spf13/cobra from 1.8.0 to 1.8.1 @dependabot (#46)
+- build(deps): bump golang.org/x/vuln from 1.1.0 to 1.1.2 @dependabot (#43)
+- build(deps): bump goreleaser/goreleaser-action from 5.0.0 to 6.0.0 @dependabot (#41)
+- build(deps): bump github.com/spf13/viper from 1.18.2 to 1.19.0 @dependabot (#39)
+- build(deps): bump securego/gosec from 2.19.0 to 2.20.0 @dependabot (#33)
+- build(deps): bump github.com/golangci/golangci-lint from 1.58.0 to 1.59.1 @dependabot (#44)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.52.2 to 1.54.6 @dependabot (#47)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.51.25 to 1.52.2 @dependabot (#28)
+- build(deps): bump github.com/golangci/golangci-lint from 1.57.2 to 1.58.0 @dependabot (#27)
+- build(deps): bump golang.org/x/vuln from 1.0.4 to 1.1.0 @dependabot (#24)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.51.16 to 1.51.25 @dependabot (#25)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.51.11 to 1.51.16 @dependabot (#20)
+- build(deps): bump github.com/golangci/golangci-lint from 1.56.2 to 1.57.2 @dependabot (#18)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.51.6 to 1.51.11 @dependabot (#19)
+- build(deps): bump github.com/charmbracelet/log from 0.3.1 to 0.4.0 @dependabot (#16)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.50.35 to 1.51.6 @dependabot (#17)
+- build(deps): bump google.golang.org/protobuf from 1.31.0 to 1.33.0 @dependabot (#13)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.50.30 to 1.50.35 @dependabot (#12)
+- build(deps): bump github.com/stretchr/testify from 1.8.4 to 1.9.0 @dependabot (#11)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.50.25 to 1.50.30 @dependabot (#10)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.50.20 to 1.50.25 @dependabot (#9)
+- maint: remove unused tools @joshbeard (#8)
+
 ## 0.4.1 - 2024-02-25
 
 - Update GitHub action for sort, order @joshbeard (#7)
