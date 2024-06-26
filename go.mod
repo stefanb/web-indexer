@@ -9,7 +9,7 @@ require (
 	github.com/golangci/golangci-lint v1.59.1
 	github.com/segmentio/golines v0.12.2
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/vuln v1.1.0
 	mvdan.cc/gofumpt v0.6.0
