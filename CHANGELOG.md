@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 - 2025-03-15
+
+- fix: expose noindex to action, entrypoint @joshbeard (#70)
+
 ## 0.5.1 - 2025-03-15
 
 - fix: CI package tests @joshbeard (#69)
