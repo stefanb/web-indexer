@@ -14,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: check-vuln
@@ -35,7 +35,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: Lint
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: Test
