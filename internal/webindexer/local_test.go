@@ -38,10 +38,11 @@ func TestLocalBackendRead(t *testing.T) {
 	}
 
 	// Test the Read function
-	items, err := localBackend.Read(tempDir)
+	items, hasNoIndex, err := localBackend.Read(tempDir)
 	if err != nil {
 		t.Errorf("Failed to read directory: %v", err)
 	}
+	assert.False(t, hasNoIndex)
 
 	if len(items) != len(fileNames) {
 		t.Errorf("Expected %d items, got %d", len(fileNames), len(items))
@@ -53,6 +54,83 @@ func TestLocalBackendRead(t *testing.T) {
 			t.Errorf("Unexpected file: %s", item.Name)
 		}
 	}
+}
+
+func TestLocalBackendReadWithNoIndex(t *testing.T) {
+	// Setup temporary directory
+	tempDir, err := os.MkdirTemp("", "test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create test files including a noindex file
+	files := map[string]string{
+		"file1.txt": "test content",
+		".noindex":  "",
+	}
+	for name, content := range files {
+		err := os.WriteFile(filepath.Join(tempDir, name), []byte(content), 0o644)
+		require.NoError(t, err)
+	}
+
+	// Setup LocalBackend with noindex configuration
+	localBackend := LocalBackend{
+		path: tempDir,
+		cfg: Config{
+			DateFormat:   "2006-01-02",
+			IndexFile:    "index.html",
+			NoIndexFiles: []string{".noindex"},
+		},
+	}
+
+	// Test reading directory with noindex file
+	items, hasNoIndex, err := localBackend.Read(tempDir)
+	require.NoError(t, err)
+	assert.True(t, hasNoIndex)
+	assert.Empty(t, items)
+}
+
+func TestLocalBackendReadSubdirWithNoIndex(t *testing.T) {
+	// Setup temporary directory
+	tempDir, err := os.MkdirTemp("", "test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create a subdirectory with a noindex file
+	subDir := filepath.Join(tempDir, "subdir")
+	require.NoError(t, os.MkdirAll(subDir, 0o755))
+
+	// Create test files
+	files := map[string]string{
+		"file1.txt":        "test content",
+		"subdir/file2.txt": "test content",
+		"subdir/.noindex":  "",
+	}
+	for name, content := range files {
+		err := os.WriteFile(filepath.Join(tempDir, name), []byte(content), 0o644)
+		require.NoError(t, err)
+	}
+
+	// Setup LocalBackend with noindex configuration
+	localBackend := LocalBackend{
+		path: tempDir,
+		cfg: Config{
+			DateFormat:   "2006-01-02",
+			IndexFile:    "index.html",
+			NoIndexFiles: []string{".noindex"},
+		},
+	}
+
+	// Test reading parent directory
+	items, hasNoIndex, err := localBackend.Read(tempDir)
+	require.NoError(t, err)
+	assert.False(t, hasNoIndex)
+	assert.Len(t, items, 1) // Should only contain file1.txt, not subdir
+
+	// Test reading subdirectory with noindex file
+	items, hasNoIndex, err = localBackend.Read(subDir)
+	require.NoError(t, err)
+	assert.True(t, hasNoIndex)
+	assert.Empty(t, items)
 }
 
 func TestLocalBackendWrite(t *testing.T) {

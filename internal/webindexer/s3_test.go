@@ -33,8 +33,9 @@ func TestS3BackendRead(t *testing.T) {
 		svc:    mockSvc,
 		bucket: "test-bucket",
 		cfg: Config{
-			Recursive: true,
-			Source:    "s3://test-bucket",
+			Recursive:    true,
+			Source:       "s3://test-bucket",
+			NoIndexFiles: []string{".noindex"},
 		},
 	}
 
@@ -68,31 +69,25 @@ func TestS3BackendRead(t *testing.T) {
 			{
 				Prefix: aws.String("prefix/dir1/"),
 			},
-			// {
-			// 	Prefix: aws.String("prefix/file1.txt"),
-			// },
-			// {
-			// 	Prefix: aws.String("prefix/file2.txt"),
-			// },
-			// {
-			// 	Prefix: aws.String("prefix/smallfile1.txt"),
-			// },
-			// {
-			// 	Prefix: aws.String("prefix/dir1/dir1file1.txt"),
-			// },
 		},
 	}, nil)
 
-	// Assert the expected items
-	items, err := backend.Read("/")
+	// Test reading root directory
+	items, hasNoIndex, err := backend.Read("/")
 	require.NoError(t, err)
+	assert.False(t, hasNoIndex)
+	require.NotEmpty(t, items)
 
-	items1, err := backend.Read("prefix/")
+	// Test reading prefix directory
+	items1, hasNoIndex, err := backend.Read("prefix/")
 	require.NoError(t, err)
+	assert.False(t, hasNoIndex)
 	items = append(items, items1...)
 
-	items2, err := backend.Read("prefix/dir1/")
+	// Test reading subdirectory
+	items2, hasNoIndex, err := backend.Read("prefix/dir1/")
 	require.NoError(t, err)
+	assert.False(t, hasNoIndex)
 	items = append(items, items2...)
 
 	require.Len(t, items, 6, "There should be 6 items")
@@ -115,7 +110,80 @@ func TestS3BackendRead(t *testing.T) {
 		}
 	}
 
-	// Assert the expected calls
+	mockSvc.AssertExpectations(t)
+}
+
+func TestS3BackendReadWithNoIndex(t *testing.T) {
+	mockSvc := new(MockS3Client)
+	backend := S3Backend{
+		svc:    mockSvc,
+		bucket: "test-bucket",
+		cfg: Config{
+			Recursive:    true,
+			Source:       "s3://test-bucket",
+			NoIndexFiles: []string{".noindex"},
+		},
+	}
+
+	// Mock response with a noindex file
+	mockSvc.On("ListObjectsV2", mock.MatchedBy(func(input *s3.ListObjectsV2Input) bool {
+		return *input.Bucket == "test-bucket" && *input.Prefix == "prefix/"
+	})).Return(&s3.ListObjectsV2Output{
+		Contents: []*s3.Object{
+			{
+				Key:          aws.String("prefix/.noindex"),
+				Size:         aws.Int64(0),
+				LastModified: aws.Time(time.Now()),
+			},
+			{
+				Key:          aws.String("prefix/file1.txt"),
+				Size:         aws.Int64(1024),
+				LastModified: aws.Time(time.Now()),
+			},
+		},
+	}, nil)
+
+	// Test reading directory with noindex file
+	t.Logf("NoIndexFiles: %v", backend.cfg.NoIndexFiles)
+	items, hasNoIndex, err := backend.Read("prefix/")
+	require.NoError(t, err)
+	t.Logf("hasNoIndex: %v, items: %v", hasNoIndex, items)
+	assert.True(t, hasNoIndex)
+	assert.Empty(t, items)
+
+	mockSvc.AssertExpectations(t)
+}
+
+func TestS3BackendReadWithNoIndexSimple(t *testing.T) {
+	mockSvc := new(MockS3Client)
+	backend := S3Backend{
+		svc:    mockSvc,
+		bucket: "test-bucket",
+		cfg: Config{
+			NoIndexFiles: []string{".noindex"},
+		},
+	}
+
+	// Mock response with a noindex file
+	mockSvc.On("ListObjectsV2", mock.MatchedBy(func(input *s3.ListObjectsV2Input) bool {
+		return *input.Bucket == "test-bucket" && (*input.Prefix == "" || *input.Prefix == "/")
+	})).Return(&s3.ListObjectsV2Output{
+		Contents: []*s3.Object{
+			{
+				Key:          aws.String(".noindex"),
+				Size:         aws.Int64(0),
+				LastModified: aws.Time(time.Now()),
+			},
+		},
+	}, nil)
+
+	// Test reading directory with noindex file
+	items, hasNoIndex, err := backend.Read("")
+	require.NoError(t, err)
+	t.Logf("items: %v, hasNoIndex: %v", items, hasNoIndex)
+	assert.True(t, hasNoIndex)
+	assert.Empty(t, items)
+
 	mockSvc.AssertExpectations(t)
 }
 

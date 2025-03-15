@@ -21,7 +21,9 @@ type S3API interface {
 	PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error)
 }
 
-func (s *S3Backend) Read(prefix string) ([]Item, error) {
+var _ FileSource = &S3Backend{}
+
+func (s *S3Backend) Read(prefix string) ([]Item, bool, error) {
 	// Ensure the prefix has a trailing slash for s3 keys
 	if !strings.HasSuffix(prefix, "/") {
 		prefix = prefix + "/"
@@ -43,17 +45,28 @@ func (s *S3Backend) Read(prefix string) ([]Item, error) {
 
 	resp, err := s.svc.ListObjectsV2(req)
 	if err != nil {
-		return nil, fmt.Errorf("unable to list S3 objects: %w", err)
+		return nil, false, fmt.Errorf("unable to list S3 objects: %w", err)
+	}
+
+	// First check for noindex files before processing anything else
+	for _, content := range resp.Contents {
+		fileName := filepath.Base(*content.Key)
+		if len(s.cfg.NoIndexFiles) > 0 && contains(s.cfg.NoIndexFiles, fileName) {
+			log.Infof("Skipping %s/%s (found noindex file %s)", s.bucket, prefix, fileName)
+			return nil, true, nil
+		}
 	}
 
 	var items []Item
+	// Process all other files
 	for _, content := range resp.Contents {
-		log.Debugf("Found object: %s", *content.Key)
 		if shouldSkip(*content.Key, s.cfg.IndexFile, s.cfg.Skips) {
 			continue
 		}
 
-		itemName := filepath.Base(*content.Key)
+		// Get the relative name by removing the prefix
+		itemName := strings.TrimPrefix(*content.Key, prefix)
+
 		item := Item{
 			Name:         itemName,
 			Size:         humanizeBytes(*content.Size),
@@ -64,8 +77,36 @@ func (s *S3Backend) Read(prefix string) ([]Item, error) {
 		items = append(items, item)
 	}
 
+	// Only process directories if we haven't found a noindex file
 	for _, commonPrefix := range resp.CommonPrefixes {
 		log.Debugf("Found common prefix: %s", *commonPrefix.Prefix)
+
+		// Check if this prefix contains a noindex file
+		subReq := &s3.ListObjectsV2Input{
+			Bucket:    aws.String(s.bucket),
+			Prefix:    commonPrefix.Prefix,
+			Delimiter: aws.String("/"),
+		}
+
+		subResp, err := s.svc.ListObjectsV2(subReq)
+		if err != nil {
+			return nil, false, fmt.Errorf("unable to list S3 objects in prefix %s: %w", *commonPrefix.Prefix, err)
+		}
+
+		// Skip this prefix if it contains a noindex file
+		hasNoIndex := false
+		for _, content := range subResp.Contents {
+			fileName := filepath.Base(*content.Key)
+			if len(s.cfg.NoIndexFiles) > 0 && contains(s.cfg.NoIndexFiles, fileName) {
+				log.Infof("Skipping %s/%s (found noindex file %s)", s.bucket, *commonPrefix.Prefix, fileName)
+				hasNoIndex = true
+				break
+			}
+		}
+		if hasNoIndex {
+			continue
+		}
+
 		dirName := strings.TrimPrefix(*commonPrefix.Prefix, prefix)
 		item := Item{
 			Name:  dirName,
@@ -74,7 +115,7 @@ func (s *S3Backend) Read(prefix string) ([]Item, error) {
 		items = append(items, item)
 	}
 
-	return items, nil
+	return items, false, nil
 }
 
 func (s *S3Backend) Write(data Data, content string) error {

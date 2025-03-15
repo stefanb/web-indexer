@@ -19,9 +19,9 @@ type MockSource struct {
 	mock.Mock
 }
 
-func (m *MockSource) Read(path string) ([]Item, error) {
+func (m *MockSource) Read(path string) ([]Item, bool, error) {
 	args := m.Called(path)
-	return args.Get(0).([]Item), args.Error(1)
+	return args.Get(0).([]Item), args.Bool(1), args.Error(2)
 }
 
 func (m *MockSource) Write(data Data, content string) error {
@@ -40,7 +40,7 @@ func TestIndexer_Generate(t *testing.T) {
 		},
 	}
 
-	mockSource.On("Read", mock.Anything).Return([]Item{}, nil)
+	mockSource.On("Read", mock.Anything).Return([]Item{}, false, nil)
 	mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
 
 	err := indexer.Generate("path/to/generate")
@@ -80,7 +80,7 @@ func TestCustomTemplate(t *testing.T) {
 
 	require.NoError(t, err)
 
-	mockSource.On("Read", mock.Anything).Return([]Item{}, nil)
+	mockSource.On("Read", mock.Anything).Return([]Item{}, false, nil)
 	mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
 
 	err = indexer.Generate("path/to/generate")

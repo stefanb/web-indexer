@@ -32,7 +32,7 @@ type Indexer struct {
 // FileSource is an interface for listing the contents of a directory or S3
 // bucket.
 type FileSource interface {
-	Read(path string) ([]Item, error)
+	Read(path string) ([]Item, bool, error)
 	Write(data Data, content string) error
 }
 
@@ -144,6 +144,16 @@ func setupBackends(indexer *Indexer) error {
 		indexer.s3 = s3.New(sess)
 	}
 
+	// For local directories, convert relative paths to absolute paths
+	if !isS3URI(indexer.Cfg.Source) {
+		absPath, err := filepath.Abs(indexer.Cfg.Source)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for source: %w", err)
+		}
+		log.Debugf("Converted source path from %s to %s", indexer.Cfg.Source, absPath)
+		indexer.Cfg.Source = absPath
+	}
+
 	indexer.Cfg.BasePath = strings.TrimSuffix(indexer.Cfg.Source, "/")
 	if isS3URI(indexer.Cfg.Source) {
 		_, prefix := uriToBucketAndPrefix(indexer.Cfg.Source)
@@ -181,9 +191,14 @@ func setupBackend(uri string, indexer *Indexer) (FileSource, error) {
 func (i Indexer) Generate(path string) error {
 	var err error
 
-	items, err := i.Source.Read(path)
+	items, hasNoIndex, err := i.Source.Read(path)
 	if err != nil {
 		return err
+	}
+
+	// If hasNoIndex is true, skip this directory entirely
+	if hasNoIndex {
+		return nil
 	}
 
 	data, err := i.data(items, path)
@@ -315,6 +330,16 @@ func shouldSkip(name, index string, skips []string) bool {
 		return true
 	}
 
+	return false
+}
+
+// hasNoIndexFile checks if any of the configured noindex files exist in the given list of items
+func hasNoIndexFile(items []Item, noIndexFiles []string) bool {
+	for _, item := range items {
+		if !item.IsDir && contains(noIndexFiles, item.Name) {
+			return true
+		}
+	}
 	return false
 }
 

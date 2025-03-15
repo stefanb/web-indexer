@@ -30,26 +30,27 @@ Usage:
   web-indexer --source <source> --target <target> [flags]
 
 Flags:
-  -u, --base-url string      A URL to prepend to the links
-  -c, --config string        config file
-      --date-format string   The date format to use in the index page (default "2006-01-02 15:04:05 MST")
-      --dirs-first           List directories first (default true)
-  -h, --help                 help for web-indexer
-  -i, --index-file string    The name of the index file (default "index.html")
-  -l, --link-to-index        Link to the index file or just the path
-  -F, --log-file string      The log file
-  -L, --log-level string     The log level (default "info")
-  -m, --minify               Minify the index page
-      --order string         The order for the items. One of: asc, desc (default "asc")
-  -q, --quiet                Suppress log output
-  -r, --recursive            List files recursively
-  -S, --skip strings         A list of files or directories to skip. Comma separated or specified multiple times
-      --sort-by string       The order for the index page. One of: last_modified, name, natural_name (default "natural_name")
-  -s, --source string        REQUIRED. The source directory or S3 URI to list
-  -t, --target string        REQUIRED. The target directory or S3 URI to write to
-  -f, --template string      A custom template file to use for the index page
-  -T, --title string         The title of the index page
-  -v, --version              version for web-indexer
+  -u, --base-url string         A URL to prepend to the links
+  -c, --config string           config file
+      --date-format string      The date format to use in the index page (default "2006-01-02 15:04:05 MST")
+      --dirs-first              List directories first (default true)
+  -h, --help                    help for web-indexer
+  -i, --index-file string       The name of the index file (default "index.html")
+  -l, --link-to-index           Link to the index file or just the path
+  -F, --log-file string         The log file
+  -L, --log-level string        The log level (default "info")
+  -m, --minify                  Minify the index page
+  -n, --noindex-files strings   A list of files that indicate a directory should be skipped. Comma separated or specified multiple times (default [.noindex])
+      --order string            The order for the items. One of: asc, desc (default "asc")
+  -q, --quiet                   Suppress log output
+  -r, --recursive               List files recursively
+  -S, --skip strings            A list of files or directories to skip. Comma separated or specified multiple times
+      --sort-by string          The order for the index page. One of: last_modified, name, natural_name (default "natural_name")
+  -s, --source string           REQUIRED. The source directory or S3 URI to list
+  -t, --target string           REQUIRED. The target directory or S3 URI to write to
+  -f, --template string         A custom template file to use for the index page
+  -T, --title string            The title of the index page
+  -v, --version                 version for web-indexer
 ```
 
 ### Examples
@@ -210,6 +211,10 @@ log_level: "info"
 # minify toggles minifying the generated HTML.
 minify: false
 
+# noindex_files is a list of filenames that, when present in a directory,
+# indicate that the directory and its subdirectories should be skipped.
+noindex_files: [".noindex"]
+
 # quiet suppresses all log output
 quiet: false
 
@@ -256,4 +261,50 @@ minify: true
 recursive: true
 link_to_index: true
 order: desc
+```
+
+## Excluding Directories with .noindex Files
+
+You can exclude directories from being indexed by placing a `.noindex` file (or any file specified with the `--noindex-files` flag) in those directories. When the indexer encounters a directory containing a noindex file, it will:
+
+1. Skip generating an index for that directory
+2. Skip including that directory in the parent directory's index
+3. Skip all subdirectories beneath it
+
+This is useful for:
+- Excluding private or sensitive directories from being indexed
+- Preventing indexing of directories that contain temporary or build files
+- Selectively controlling which directories appear in your indexes
+
+### Examples
+
+To exclude a directory using the default `.noindex` file:
+
+```shell
+# Create an empty .noindex file in a directory you want to exclude
+touch /path/to/directory/.noindex
+```
+
+To specify custom noindex filenames:
+
+```shell
+# Use custom filenames instead of the default .noindex
+web-indexer --source /path/to/directory --target /path/to/output --noindex-files .private,.hidden,DO_NOT_INDEX
+```
+
+In your YAML configuration:
+
+```yaml
+source: /path/to/directory
+target: /path/to/output
+noindex_files:
+  - .private
+  - .hidden
+  - DO_NOT_INDEX
+```
+
+When the indexer encounters a directory with a noindex file, it will log a message at the INFO level:
+
+```
+INFO Skipping /path/to/directory (found noindex file .noindex)
 ```
