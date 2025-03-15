@@ -288,7 +288,12 @@ func (i Indexer) data(items []Item, path string) (Data, error) {
 		data.HasParent = false
 	} else {
 		parent := filepath.Dir(path)
-		data.Parent = resolveParentPath(i.Cfg.BaseURL, parent, i.Cfg.IndexFile, i.Cfg.LinkToIndexes)
+		// Calculate the relative parent path
+		relativeParent := strings.TrimPrefix(parent, i.Cfg.BasePath)
+		if !strings.HasPrefix(relativeParent, "/") {
+			relativeParent = "/" + relativeParent
+		}
+		data.Parent = resolveParentPath(i.Cfg.BaseURL, relativeParent, i.Cfg.IndexFile, i.Cfg.LinkToIndexes)
 		data.HasParent = parent != path
 	}
 
@@ -306,7 +311,14 @@ func (i Indexer) data(items []Item, path string) (Data, error) {
 }
 
 func (i Indexer) parseItem(path string, item Item) (Item, error) {
-	item.URL = resolveItemURL(i.Cfg.BaseURL, path, item.Name, item.IsDir, i.Cfg.LinkToIndexes, i.Cfg.IndexFile)
+	// Calculate the relative path by removing the base path
+	relativePath := strings.TrimPrefix(path, i.Cfg.BasePath)
+	// Ensure relative path is prefixed with a slash
+	if !strings.HasPrefix(relativePath, "/") {
+		relativePath = "/" + relativePath
+	}
+
+	item.URL = resolveItemURL(i.Cfg.BaseURL, relativePath, item.Name, item.IsDir, i.Cfg.LinkToIndexes, i.Cfg.IndexFile)
 
 	if item.IsDir && i.Cfg.Recursive {
 		if err := i.Generate(filepath.Join(path, item.Name)); err != nil {
@@ -353,16 +365,6 @@ func shouldSkip(name, index string, skips []string) bool {
 		return true
 	}
 
-	return false
-}
-
-// hasNoIndexFile checks if any of the configured noindex files exist in the given list of items
-func hasNoIndexFile(items []Item, noIndexFiles []string) bool {
-	for _, item := range items {
-		if !item.IsDir && contains(noIndexFiles, item.Name) {
-			return true
-		}
-	}
 	return false
 }
 
