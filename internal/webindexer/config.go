@@ -22,6 +22,7 @@ type Config struct {
 	Source        string   `yaml:"source"        mapstructure:"source"`
 	Target        string   `yaml:"target"        mapstructure:"target"`
 	Template      string   `yaml:"template"      mapstructure:"template"`
+	Theme         string   `yaml:"theme"         mapstructure:"theme"`
 	Title         string   `yaml:"title"         mapstructure:"title"`
 	CfgFile       string   `yaml:"-"`
 	BasePath      string   `yaml:"-"`
@@ -40,6 +41,15 @@ type Order string
 const (
 	OrderAsc  Order = "asc"
 	OrderDesc Order = "desc"
+)
+
+type Theme string
+
+const (
+	ThemeDefault   Theme = "default"
+	ThemeSolarized Theme = "solarized"
+	ThemeNord      Theme = "nord"
+	ThemeDracula   Theme = "dracula"
 )
 
 func (c Config) SortByValue() SortBy {
@@ -63,6 +73,19 @@ func (c Config) OrderByValue() Order {
 		return OrderDesc
 	default:
 		return ""
+	}
+}
+
+func (c Config) ThemeValue() Theme {
+	switch c.Theme {
+	case "solarized":
+		return ThemeSolarized
+	case "nord":
+		return ThemeNord
+	case "dracula":
+		return ThemeDracula
+	default:
+		return ThemeDefault
 	}
 }
 

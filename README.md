@@ -49,6 +49,7 @@ Flags:
   -s, --source string           REQUIRED. The source directory or S3 URI to list
   -t, --target string           REQUIRED. The target directory or S3 URI to write to
   -f, --template string         A custom template file to use for the index page
+      --theme string            The theme to use for the index page. One of: default, solarized, nord, dracula (default "default")
   -T, --title string            The title of the index page
   -v, --version                 version for web-indexer
 ```
@@ -99,10 +100,51 @@ Set a title for the index pages:
 web-indexer --source /path/to/directory --target /path/to/directory --title 'Index of {relativePath}'
 ```
 
+Use a specific theme:
+
+```shell
+web-indexer --source /path/to/directory --target /path/to/directory --theme solarized
+```
+
 Load a config:
 
 ```shell
 web-indexer -config /path/to/config.yaml
+```
+
+## Themes
+
+Web-indexer comes with several built-in themes that provide different visual styles for your directory listings. All themes are responsive and include both light and dark mode variants that automatically adapt to the user's system preferences.
+
+### Available Themes
+
+- **default**: The original theme with a clean, minimal design
+- **solarized**: Based on the popular [Solarized](https://ethanschoonover.com/solarized/) color scheme with carefully chosen colors for optimal readability
+- **nord**: Inspired by the [Nord](https://www.nordtheme.com/) color palette with its Arctic-inspired colors
+- **dracula**: Based on the popular [Dracula](https://draculatheme.com/) dark theme with vibrant, high-contrast colors
+
+### Using Themes
+
+You can select a theme using the `--theme` flag:
+
+```shell
+web-indexer --source /path/to/directory --target /path/to/directory --theme nord
+```
+
+Or in your configuration file:
+
+```yaml
+source: /path/to/directory
+target: /path/to/directory
+theme: dracula
+```
+
+### Custom Templates
+
+If the built-in themes don't meet your needs, you can still use a completely custom template with the `--template` flag:
+
+```shell
+web-indexer --source /path/to/directory --target /path/to/directory --template /path/to/custom/template.html
 ```
 
 ## GitHub Action
@@ -242,6 +284,10 @@ target: "blah/"
 # indexes. The built-in template is used by default.
 template: ""
 
+# theme is the name of the built-in theme to use.
+# Valid values: default, solarized, nord, dracula
+theme: "default"
+
 # title customizes the title field available in the template.
 # Certain tokens can be used to be dynamically replaced.
 #   {source}       - the base source path
@@ -261,6 +307,7 @@ minify: true
 recursive: true
 link_to_index: true
 order: desc
+theme: nord
 ```
 
 ## Excluding Directories with .noindex Files

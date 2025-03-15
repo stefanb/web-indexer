@@ -306,3 +306,44 @@ func TestIndexer_ParseItem(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com/dir/file.html", modifiedItemFile.URL)
 }
+
+func TestGetThemeTemplate(t *testing.T) {
+	tests := []struct {
+		name     string
+		theme    string
+		expected string
+	}{
+		{
+			name:     "default theme",
+			theme:    "default",
+			expected: defaultTemplate,
+		},
+		{
+			name:     "solarized theme",
+			theme:    "solarized",
+			expected: solarizedTemplate,
+		},
+		{
+			name:     "nord theme",
+			theme:    "nord",
+			expected: nordTemplate,
+		},
+		{
+			name:     "dracula theme",
+			theme:    "dracula",
+			expected: draculaTemplate,
+		},
+		{
+			name:     "unknown theme",
+			theme:    "unknown",
+			expected: defaultTemplate,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := getThemeTemplate(tc.theme)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
