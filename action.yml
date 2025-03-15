@@ -28,6 +28,10 @@ inputs:
     required: false
   minify:
     description: Boolean toggling minification of the generated HTML
+  noindex_files:
+    description: >
+      A comma-separated list of filenames that will cause a directory/path to be skipped if present
+    required: false
   order:
     description: The order for the items. One of asc, desc (default "asc")
     required: false
@@ -63,6 +67,7 @@ runs:
     LINK_TO_INDEX: ${{ inputs.link_to_index }}
     LOG_LEVEL: ${{ inputs.log_level }}
     MINIFY: ${{ inputs.minify }}
+    NOINDEX_FILES: ${{ inputs.noindex_files }}
     ORDER: ${{ inputs.order }}
     RECURSIVE: ${{ inputs.recursive }}
     SKIP: ${{ inputs.skip }}
