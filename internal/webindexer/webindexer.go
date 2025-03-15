@@ -17,8 +17,17 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-//go:embed templates/index.html.tmpl
+//go:embed templates/themes/default.html.tmpl
 var defaultTemplate string
+
+//go:embed templates/themes/solarized.html.tmpl
+var solarizedTemplate string
+
+//go:embed templates/themes/nord.html.tmpl
+var nordTemplate string
+
+//go:embed templates/themes/dracula.html.tmpl
+var draculaTemplate string
 
 // Indexer is the main struct for the webindexer package.
 type Indexer struct {
@@ -216,8 +225,8 @@ func (i Indexer) Generate(path string) error {
 		}
 		templStr = string(templBytes)
 	} else {
-		log.Debugf("Using default template for %s", path)
-		templStr = defaultTemplate
+		log.Debugf("Using %s theme template for %s", i.Cfg.Theme, path)
+		templStr = getThemeTemplate(i.Cfg.Theme)
 	}
 
 	tmpl, err = template.New("index").Parse(templStr)
@@ -240,6 +249,20 @@ func (i Indexer) Generate(path string) error {
 	}
 
 	return nil
+}
+
+// getThemeTemplate returns the template string for the given theme.
+func getThemeTemplate(theme string) string {
+	switch theme {
+	case "solarized":
+		return solarizedTemplate
+	case "nord":
+		return nordTemplate
+	case "dracula":
+		return draculaTemplate
+	default:
+		return defaultTemplate
+	}
 }
 
 func (i Indexer) data(items []Item, path string) (Data, error) {

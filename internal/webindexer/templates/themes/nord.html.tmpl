@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+    <style>
+    *, body {
+        padding: 0;
+        margin: 0;
+    }
+    a { text-decoration: none; }
+
+    /* Nord color palette */
+    :root {
+        /* Polar Night */
+        --nord0: #2e3440;
+        --nord1: #3b4252;
+        --nord2: #434c5e;
+        --nord3: #4c566a;
+        
+        /* Snow Storm */
+        --nord4: #d8dee9;
+        --nord5: #e5e9f0;
+        --nord6: #eceff4;
+        
+        /* Frost */
+        --nord7: #8fbcbb;
+        --nord8: #88c0d0;
+        --nord9: #81a1c1;
+        --nord10: #5e81ac;
+        
+        /* Aurora */
+        --nord11: #bf616a;
+        --nord12: #d08770;
+        --nord13: #ebcb8b;
+        --nord14: #a3be8c;
+        --nord15: #b48ead;
+    }
+
+    body { 
+        font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace; 
+        line-height: 1.6;
+    }
+    
+    h1 {
+        padding: 16px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+    }
+    
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+    }
+    
+    th, td {
+        text-align: left;
+        padding: 10px 16px;
+    }
+    
+    tr:hover { 
+        background-color: rgba(0, 0, 0, 0.05); 
+    }
+    
+    span.icon { 
+        margin-right: 10px; 
+        opacity: 0.8;
+    }
+
+    /* Light theme (Nord Light) */
+    @media (prefers-color-scheme: light) {
+        body { 
+            background-color: var(--nord6); 
+            color: var(--nord0); 
+        }
+        h1 { 
+            color: var(--nord10);
+            background-color: var(--nord5);
+            border-bottom: 1px solid var(--nord4);
+        }
+        a:link { color: var(--nord10); }
+        a:visited { color: var(--nord15); }
+        a:hover { color: var(--nord8); text-decoration: underline; }
+        
+        th { 
+            color: var(--nord2);
+            border-bottom: 1px solid var(--nord4);
+        }
+        td { 
+            border-bottom: 1px solid var(--nord5); 
+        }
+        tr:hover { 
+            background-color: var(--nord5); 
+        }
+    }
+
+    /* Dark theme (Nord Dark) */
+    @media (prefers-color-scheme: dark) {
+        body { 
+            background-color: var(--nord0); 
+            color: var(--nord4); 
+        }
+        h1 { 
+            color: var(--nord8);
+            background-color: var(--nord1);
+            border-bottom: 1px solid var(--nord3);
+        }
+        a:link { color: var(--nord8); }
+        a:visited { color: var(--nord15); }
+        a:hover { color: var(--nord7); text-decoration: underline; }
+        
+        th { 
+            color: var(--nord6);
+            border-bottom: 1px solid var(--nord3);
+        }
+        td { 
+            border-bottom: 1px solid var(--nord1); 
+        }
+        tr:hover { 
+            background-color: var(--nord1); 
+        }
+    }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+    {{ if .Title }}
+    <h1>{{ .Title }}</h1>
+    {{ end }}
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+        </tr>
+        {{ if .HasParent }}
+        <tr>
+            <td class="filename"><a href="../index.html">
+                <span class="icon">🔼</span>Go Up</a>
+            </td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+        {{end}}
+        {{range .Items}}
+        <tr>
+            <td class="filename">
+                <span class="icon">
+                {{if .IsDir}}
+                📁
+                {{else}}
+                📄
+                {{end}}
+                </span>
+                <a href="{{.URL}}">{{.Name}}</a>
+            </td>
+            <td class="size">
+                {{if not .IsDir}}
+                {{.Size}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+            <td class="date">
+                {{if not .IsDir}}
+                {{.LastModified}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html> 

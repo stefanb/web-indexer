@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+    <style>
+    *, body {
+        padding: 0;
+        margin: 0;
+    }
+    a { text-decoration: none; }
+
+    /* Dracula color palette */
+    :root {
+        --background: #282a36;
+        --current-line: #44475a;
+        --selection: #44475a;
+        --foreground: #f8f8f2;
+        --comment: #6272a4;
+        --cyan: #8be9fd;
+        --green: #50fa7b;
+        --orange: #ffb86c;
+        --pink: #ff79c6;
+        --purple: #bd93f9;
+        --red: #ff5555;
+        --yellow: #f1fa8c;
+    }
+
+    body { 
+        font-family: 'JetBrains Mono', 'Fira Code', monospace; 
+        line-height: 1.6;
+    }
+    
+    h1 {
+        padding: 16px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+    }
+    
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+    }
+    
+    th, td {
+        text-align: left;
+        padding: 10px 16px;
+    }
+    
+    tr:hover { 
+        background-color: rgba(255, 255, 255, 0.05); 
+    }
+    
+    span.icon { 
+        margin-right: 10px; 
+        opacity: 0.9;
+    }
+
+    /* Dracula theme is primarily dark, but we'll provide a light variant too */
+    @media (prefers-color-scheme: light) {
+        body { 
+            background-color: #f8f8f2; 
+            color: #282a36; 
+        }
+        h1 { 
+            color: var(--purple);
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ddd;
+        }
+        a:link { color: var(--pink); }
+        a:visited { color: var(--purple); }
+        a:hover { color: var(--cyan); text-decoration: underline; }
+        
+        th { 
+            color: var(--comment);
+            border-bottom: 1px solid #ddd;
+        }
+        td { 
+            border-bottom: 1px solid #eee; 
+        }
+        tr:hover { 
+            background-color: #f5f5f5; 
+        }
+    }
+
+    /* Dark theme (Dracula) */
+    @media (prefers-color-scheme: dark) {
+        body { 
+            background-color: var(--background); 
+            color: var(--foreground); 
+        }
+        h1 { 
+            color: var(--purple);
+            background-color: var(--current-line);
+            border-bottom: 1px solid var(--selection);
+        }
+        a:link { color: var(--pink); }
+        a:visited { color: var(--purple); }
+        a:hover { color: var(--cyan); text-decoration: underline; }
+        
+        th { 
+            color: var(--comment);
+            border-bottom: 1px solid var(--selection);
+        }
+        td { 
+            border-bottom: 1px solid var(--current-line); 
+        }
+        tr:hover { 
+            background-color: var(--selection); 
+        }
+    }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+    {{ if .Title }}
+    <h1>{{ .Title }}</h1>
+    {{ end }}
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+        </tr>
+        {{ if .HasParent }}
+        <tr>
+            <td class="filename"><a href="../index.html">
+                <span class="icon">🔼</span>Go Up</a>
+            </td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+        {{end}}
+        {{range .Items}}
+        <tr>
+            <td class="filename">
+                <span class="icon">
+                {{if .IsDir}}
+                📁
+                {{else}}
+                📄
+                {{end}}
+                </span>
+                <a href="{{.URL}}">{{.Name}}</a>
+            </td>
+            <td class="size">
+                {{if not .IsDir}}
+                {{.Size}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+            <td class="date">
+                {{if not .IsDir}}
+                {{.LastModified}}
+                {{else}}
+                -
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html> 
