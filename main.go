@@ -132,6 +132,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&cfg.LogLevel, "log-level", "L", "info", "The log level")
 	rootCmd.Flags().StringVarP(&cfg.LogFile, "log-file", "F", "", "The log file")
 	rootCmd.Flags().BoolVarP(&cfg.Minify, "minify", "m", false, "Minify the index page")
+	rootCmd.Flags().StringSliceVarP(&cfg.NoIndexFiles, "noindex-files", "n", []string{".noindex"}, "A list of files that indicate a directory should be skipped. "+
+		"Comma separated or specified multiple times")
 	rootCmd.Flags().BoolVarP(&cfg.Quiet, "quiet", "q", false, "Suppress log output")
 	rootCmd.Flags().StringVarP(&cfg.Order, "order", "", "asc", "The order for the items. One of: asc, desc")
 	rootCmd.Flags().BoolVarP(&cfg.Recursive, "recursive", "r", false, "List files recursively")

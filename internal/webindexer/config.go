@@ -13,6 +13,7 @@ type Config struct {
 	LogLevel      string   `yaml:"log_level"     mapstructure:"log_level"`
 	LogFile       string   `yaml:"log_file"      mapstructure:"log_file"`
 	Minify        bool     `yaml:"minify"        mapstructure:"minify"`
+	NoIndexFiles  []string `yaml:"noindex_files" mapstructure:"noindex_files"`
 	Order         string   `yaml:"order"         mapstructure:"order"`
 	Quiet         bool     `yaml:"quiet"         mapstructure:"quiet"`
 	Recursive     bool     `yaml:"recursive"     mapstructure:"recursive"`

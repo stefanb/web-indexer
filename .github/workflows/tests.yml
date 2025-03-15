@@ -7,6 +7,8 @@ on:
 jobs:
   security:
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
 
     steps:
       - uses: actions/checkout@v4
@@ -14,28 +16,31 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: check-vuln
         run: make check-vuln
 
-      - name: gosec
-        uses: securego/gosec@v2.20.0
+      - name: Run gosec
+        # Use a more recent version of gosec
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -exclude-dir=vendor ./...
         env:
-          GO111MODULE: on
-        with:
-          args: ./...
+          GOTOOLCHAIN: auto
 
   lint:
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: Lint
@@ -43,13 +48,15 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version: '1.23.0'
           check-latest: true # Ensure the cache isn't stale.
 
       - name: Test
