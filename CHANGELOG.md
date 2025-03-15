@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 - 2025-03-15
+
+- fix: CI package tests @joshbeard (#69)
+
 ## 0.5.0 - 2025-03-15
 
 - feat: Add noindex file functionality to skip dirs @joshbeard (#68)
