@@ -1,5 +1,12 @@
 #!/bin/bash
 script_dir=$(cd $(dirname $0) && pwd)
+
+# Check if a version is specified
+if [ "$1" == "--version" ] || [ "$1" == "-v" ]; then
+    export TARGET_VERSION="$2"
+    shift 2
+fi
+
 source $script_dir/common.sh
 
 FAILED=0
