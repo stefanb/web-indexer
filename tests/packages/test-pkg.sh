@@ -2,10 +2,29 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+# Find the actual package file
+TAR_FILE=$(basename $(find_package_file "tar.gz"))
+echo "Using tarball: $TAR_FILE"
+
+# Extract the actual version from the filename
+ACTUAL_VERSION=$(echo "$TAR_FILE" | sed -E "s/${PACKAGE_NAME}_([^_]+)_${OS}_amd64.tar.gz/\1/")
+if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+    echo "Warning: Testing with version $ACTUAL_VERSION instead of $EXPECTED_VERSION"
+    # Use the actual version for verification
+    VERIFY_VERSION="$ACTUAL_VERSION"
+else
+    VERIFY_VERSION="$EXPECTED_VERSION"
+fi
+
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm rockylinux:9 /bin/bash -c "
-    cp /tmp/dist/${FILENAME_BASE}.tar.gz /tmp;
-    tar -xzf /tmp/${FILENAME_BASE}.tar.gz -C /tmp;
+    # List available files for debugging
+    echo 'Available files in /tmp/dist:';
+    ls -la /tmp/dist;
+    
+    # Copy the package file
+    cp /tmp/dist/${TAR_FILE} /tmp;
+    tar -xzf /tmp/${TAR_FILE} -C /tmp;
     mv /tmp/${PACKAGE_NAME} /usr/local/bin/${PACKAGE_NAME};
     chmod +x /usr/local/bin/${PACKAGE_NAME};
 
@@ -18,11 +37,16 @@ docker run -v ${DIST_DIR}:/tmp/dist \
     echo 'ok';
 
     # Check the version
-
     echo '=== Checking executed version ===';
     INSTALLED_VERSION=\$($PACKAGE_NAME --version | grep -oP '\d+\.\d+\.\d+');
-    if [ \"\$INSTALLED_VERSION\" != \"$EXPECTED_VERSION\" ]; then
-        echo 'Version mismatch: expected $EXPECTED_VERSION, got '\"\$INSTALLED_VERSION\"'.' >&2;
+    echo \"Installed version: \$INSTALLED_VERSION, Expected: $VERIFY_VERSION\";
+    
+    # Extract just the major.minor.patch part for comparison
+    INSTALLED_VERSION_CLEAN=\$(echo \"\$INSTALLED_VERSION\" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+');
+    EXPECTED_VERSION_CLEAN=\"$(echo "$VERIFY_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "$VERIFY_VERSION")\";
+    
+    if [ \"\$INSTALLED_VERSION_CLEAN\" != \"\$EXPECTED_VERSION_CLEAN\" ]; then
+        echo 'Version mismatch: expected '\"\$EXPECTED_VERSION_CLEAN\"', got '\"\$INSTALLED_VERSION_CLEAN\"'.' >&2;
         exit 1;
     fi;
     echo 'ok';

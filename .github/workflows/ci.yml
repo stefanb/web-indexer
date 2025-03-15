@@ -58,8 +58,12 @@ jobs:
           NFPM_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
           NFPM_TESTPKG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
 
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: Test packages
-        run: ./tests/packages/run-tests.sh
+        run: ./tests/packages/run-tests.sh --version ${{ steps.get_version.outputs.VERSION }}
 
   docker-hub-doc:
     name: Publish DockerHub Readme
