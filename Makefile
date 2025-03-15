@@ -29,7 +29,7 @@ lines-fix: lines ## Fix long lines
 .PHONY: golangci-lint
 golangci-lint: ## Lint using 'golangci-lint'
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint \
-	run --deadline=300s --timeout=300s --out-format checkstyle ./... 2>&1 | tee checkstyle-report.xml
+	run --timeout=300s --out-format checkstyle ./... 2>&1 | tee checkstyle-report.xml
 
 .PHONY: lint
 lint: modverify vet gofumpt lines golangci-lint ## Run all linters
