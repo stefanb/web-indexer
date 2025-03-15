@@ -22,12 +22,13 @@ jobs:
       - name: check-vuln
         run: make check-vuln
 
-      - name: gosec
-        uses: securego/gosec@v2.20.0
+      - name: Run gosec
+        # Use a more recent version of gosec
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -exclude-dir=vendor ./...
         env:
-          GO111MODULE: on
-        with:
-          args: ./...
+          GOTOOLCHAIN: auto
 
   lint:
     runs-on: ubuntu-latest
