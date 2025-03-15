@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 - 2025-03-15
+
+- feat: add built-in themes @joshbeard (#71)
+
 ## 0.5.2 - 2025-03-15
 
 - fix: expose noindex to action, entrypoint @joshbeard (#70)
