@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1 - 2025-03-15
+
+- fix: relative paths with base URL @joshbeard (#72)
+
+maintenance:
+
+- linting: check for unused, update arg @joshbeard (#73)
+- build(deps): bump crazy-max/ghaction-import-gpg from 6.1.0 to 6.2.0 @[dependabot[bot]](https://github.com/apps/dependabot) (#64)
+- build(deps): bump goreleaser/goreleaser-action from 6.0.0 to 6.1.0 @[dependabot[bot]](https://github.com/apps/dependabot) (#65)
+
 ## 0.6.0 - 2025-03-15
 
 - feat: add built-in themes @joshbeard (#71)
