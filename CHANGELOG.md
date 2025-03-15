@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 - 2025-03-15
+
+- feat: Add noindex file functionality to skip dirs @joshbeard (#68)
+- build(deps): bump github.com/golangci/golangci-lint from 1.59.1 to 1.60.1 @[dependabot[bot]](https://github.com/apps/dependabot) (#56)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.54.20 to 1.55.5 @[dependabot[bot]](https://github.com/apps/dependabot) (#54)
+- build(deps): bump golang.org/x/vuln from 1.1.2 to 1.1.3 @[dependabot[bot]](https://github.com/apps/dependabot) (#52)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.54.11 to 1.54.20 @[dependabot[bot]](https://github.com/apps/dependabot) (#51)
+- build(deps): bump github.com/aws/aws-sdk-go from 1.54.6 to 1.54.11 @[dependabot[bot]](https://github.com/apps/dependabot) (#48)
+
 ## 0.4.2 - 2024-06-26
 
 - build(deps): bump github.com/spf13/cobra from 1.8.0 to 1.8.1 @dependabot (#46)
