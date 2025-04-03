@@ -28,13 +28,11 @@ inputs:
     required: false
   minify:
     description: Boolean toggling minification of the generated HTML
-  noindex_files:
-    description: >
-      A comma-separated list of filenames that will cause a directory/path to be skipped if present
+  noindex-files:
+    description: 'A list of files that indicate a directory should be skipped'
     required: false
   order:
-    description: The order for the items. One of asc, desc (default "asc")
-    required: false
+    description: 'The order for the items. One of: asc, desc'
   recursive:
     description: Index files recursively
   skip:
@@ -59,6 +57,9 @@ inputs:
     description: 'The Docker image tag to use (e.g., latest, dev-pr123)'
     required: false
     default: 'latest'
+  skipindex-files:
+    description: 'A list of files that indicate a directory should be skipped for indexing but still included in the parent directory listing'
+    required: false
 
 runs:
   using: 'docker'
@@ -71,7 +72,8 @@ runs:
     LINK_TO_INDEX: ${{ inputs.link_to_index }}
     LOG_LEVEL: ${{ inputs.log_level }}
     MINIFY: ${{ inputs.minify }}
-    NOINDEX_FILES: ${{ inputs.noindex_files }}
+    NOINDEX_FILES: ${{ inputs.noindex-files }}
+    SKIPINDEX_FILES: ${{ inputs.skipindex-files }}
     ORDER: ${{ inputs.order }}
     RECURSIVE: ${{ inputs.recursive }}
     SKIP: ${{ inputs.skip }}
