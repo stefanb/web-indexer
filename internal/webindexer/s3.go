@@ -48,12 +48,21 @@ func (s *S3Backend) Read(prefix string) ([]Item, bool, error) {
 		return nil, false, fmt.Errorf("unable to list S3 objects: %w", err)
 	}
 
-	// First check for noindex files before processing anything else
+	// First check for noindex files or skipindex files before processing anything else
 	for _, content := range resp.Contents {
 		fileName := filepath.Base(*content.Key)
+		// Check for noindex files (skip directory entirely)
 		if len(s.cfg.NoIndexFiles) > 0 && contains(s.cfg.NoIndexFiles, fileName) {
 			log.Infof("Skipping %s/%s (found noindex file %s)", s.bucket, prefix, fileName)
 			return nil, true, nil
+		}
+
+		// Check for skipindex files (skip indexing but include in parent)
+		if len(s.cfg.SkipIndexFiles) > 0 && contains(s.cfg.SkipIndexFiles, fileName) {
+			log.Infof("Skipping indexing of %s/%s (found skipindex file %s), will include in parent directory", s.bucket, prefix, fileName)
+			// Return empty items but mark as not having noindex file
+			// This will prevent indexing this directory but still include it in the parent
+			return []Item{}, false, nil
 		}
 	}
 
@@ -94,16 +103,16 @@ func (s *S3Backend) Read(prefix string) ([]Item, bool, error) {
 		}
 
 		// Skip this prefix if it contains a noindex file
-		hasNoIndex := false
+		skipDir := false
 		for _, content := range subResp.Contents {
 			fileName := filepath.Base(*content.Key)
 			if len(s.cfg.NoIndexFiles) > 0 && contains(s.cfg.NoIndexFiles, fileName) {
 				log.Infof("Skipping %s/%s (found noindex file %s)", s.bucket, *commonPrefix.Prefix, fileName)
-				hasNoIndex = true
+				skipDir = true
 				break
 			}
 		}
-		if hasNoIndex {
+		if skipDir {
 			continue
 		}
 

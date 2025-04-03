@@ -26,9 +26,20 @@ func (l *LocalBackend) Read(path string) ([]Item, bool, error) {
 
 	// First check for noindex files before processing anything else
 	for _, file := range files {
-		if !file.IsDir() && len(l.cfg.NoIndexFiles) > 0 && contains(l.cfg.NoIndexFiles, file.Name()) {
-			log.Infof("Skipping %s (found noindex file %s)", path, file.Name())
-			return nil, true, nil
+		if !file.IsDir() {
+			// Check for noindex files (skip directory entirely)
+			if len(l.cfg.NoIndexFiles) > 0 && contains(l.cfg.NoIndexFiles, file.Name()) {
+				log.Infof("Skipping %s (found noindex file %s)", path, file.Name())
+				return nil, true, nil
+			}
+
+			// Check for skipindex files (skip indexing but include in parent)
+			if len(l.cfg.SkipIndexFiles) > 0 && contains(l.cfg.SkipIndexFiles, file.Name()) {
+				log.Infof("Skipping indexing of %s (found skipindex file %s), will include in parent directory", path, file.Name())
+				// Return empty items but mark as not having noindex file
+				// This will prevent indexing this directory but still include it in the parent
+				return []Item{}, false, nil
+			}
 		}
 	}
 
@@ -44,7 +55,7 @@ func (l *LocalBackend) Read(path string) ([]Item, bool, error) {
 			return nil, false, fmt.Errorf("unable to stat file %s: %w", file.Name(), err)
 		}
 
-		// If it's a directory, check if it contains a noindex file before adding it
+		// If it's a directory, check if it contains a noindex or skipindex file before adding it
 		if stat.IsDir() {
 			subFiles, err := os.ReadDir(fullPath)
 			if err != nil {
@@ -52,15 +63,15 @@ func (l *LocalBackend) Read(path string) ([]Item, bool, error) {
 			}
 
 			// Skip this directory if it contains a noindex file
-			hasNoIndex := false
+			skipDir := false
 			for _, subFile := range subFiles {
 				if !subFile.IsDir() && len(l.cfg.NoIndexFiles) > 0 && contains(l.cfg.NoIndexFiles, subFile.Name()) {
 					log.Infof("Skipping %s (found noindex file %s)", fullPath, subFile.Name())
-					hasNoIndex = true
+					skipDir = true
 					break
 				}
 			}
-			if hasNoIndex {
+			if skipDir {
 				continue
 			}
 		}
