@@ -162,6 +162,8 @@ jobs:
         uses: joshbeard/web-indexer@0.4.1
         with:
           config: .web-indexer.yml
+          # Optional: Use a specific image tag (e.g., for PR testing)
+          # image_tag: dev-pr123
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -189,6 +191,15 @@ jobs:
             -e AWS_REGION='us-east-1' \
             -e CONFIG=.web-indexer.yml \
             ghcr.io/joshbeard/web-indexer/web-indexer:latest
+```
+
+To test a specific Pull Request build, replace `latest` with the PR tag (e.g., `dev-pr123`):
+
+```yaml
+# Example using PR 123's build
+docker run --rm \
+  # ... other flags ...
+  ghcr.io/joshbeard/web-indexer/web-indexer:dev-pr123
 ```
 
 Refer to the [`action.yml`](action.yml) for all available inputs, which
