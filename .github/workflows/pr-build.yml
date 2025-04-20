@@ -43,10 +43,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SNAPSHOT_TAG: dev-pr${{ github.event.pull_request.number }}
 
-      - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v3
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'Dev build has been published!'
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
           body: |
             🚀 Dev build has been published!
 
@@ -57,3 +66,4 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}:dev-pr${{ github.event.pull_request.number }}
             docker run --rm ghcr.io/${{ github.repository }}:dev-pr${{ github.event.pull_request.number }}
             ```
+          edit-mode: replace
