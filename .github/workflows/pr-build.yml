@@ -2,7 +2,7 @@ name: PR Build
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, labeled]
 
 permissions:
   contents: read # Needed for checkout
@@ -11,7 +11,7 @@ permissions:
 jobs:
   build_pr_snapshot:
     name: Build PR Snapshot
-    if: github.event.pull_request.user.login == 'joshbeard'
+    if: github.event.pull_request.user.login == 'joshbeard' && contains(github.event.pull_request.labels.*.name, 'dev-build')
     runs-on: ubuntu-latest
     env:
       GOTOOLCHAIN: auto
