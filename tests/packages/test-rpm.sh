@@ -21,7 +21,7 @@ docker run -v ${DIST_DIR}:/tmp/dist \
     # List available files for debugging
     echo 'Available files in /tmp/dist:';
     ls -la /tmp/dist;
-    
+
     # Copy the package file
     cp /tmp/dist/${RPM_FILE} /tmp;
     cd /tmp;
@@ -39,11 +39,11 @@ docker run -v ${DIST_DIR}:/tmp/dist \
     echo '=== Checking executed version ===';
     INSTALLED_VERSION=\$($PACKAGE_NAME --version | grep -oP '\d+\.\d+\.\d+');
     echo \"Installed version: \$INSTALLED_VERSION, Expected: $VERIFY_VERSION\";
-    
+
     # Extract just the major.minor.patch part for comparison
     INSTALLED_VERSION_CLEAN=\$(echo \"\$INSTALLED_VERSION\" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+');
     EXPECTED_VERSION_CLEAN=\"$(echo "$VERIFY_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "$VERIFY_VERSION")\";
-    
+
     if [ \"\$INSTALLED_VERSION_CLEAN\" != \"\$EXPECTED_VERSION_CLEAN\" ]; then
         echo 'Version mismatch: expected '\"\$EXPECTED_VERSION_CLEAN\"', got '\"\$INSTALLED_VERSION_CLEAN\"'.' >&2;
         exit 1;
