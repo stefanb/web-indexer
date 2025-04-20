@@ -33,18 +33,6 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 checksum:
   name_template: 'checksums.txt'
-signs:
-  - cmd: gpg
-    artifacts: all
-    output: "${signature}"
-    args:
-      - "--batch"
-      - "--local-user"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
 dockers:
   - id: web-indexer
     image_templates:
@@ -75,12 +63,8 @@ nfpms:
       - deb
       - rpm
       - archlinux
-    rpm:
-      signature:
-        key_file: "key.gpg"
-    deb:
-      signature:
-        key_file: "key.gpg"
+    rpm: {}
+    deb: {}
     apk: {}
     archlinux:
       packager: Josh Beard <josh@jbeard.dev>
