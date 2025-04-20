@@ -35,25 +35,25 @@ ls -la ${DIST_DIR} || echo "Dist directory not found or empty"
 find_package_file() {
     local extension=$1
     local exact_match="${DIST_DIR}/${FILENAME_BASE}.${extension}"
-    
+
     # First try the exact match
     if [ -f "$exact_match" ]; then
         echo "$exact_match"
         return 0
     fi
-    
+
     # If exact match not found, try to find a file with similar name
     # First try with the exact version
     local similar_file=$(find ${DIST_DIR} -name "${PACKAGE_NAME}_${EXPECTED_VERSION}_${OS}_amd64.${extension}" | head -n 1)
-    
+
     if [ -n "$similar_file" ]; then
         echo "$similar_file"
         return 0
     fi
-    
+
     # If still not found, try with any version
     similar_file=$(find ${DIST_DIR} -name "${PACKAGE_NAME}_*_${OS}_amd64.${extension}" | head -n 1)
-    
+
     if [ -n "$similar_file" ]; then
         # Extract the actual version from the filename for verification
         local actual_version=$(basename "$similar_file" | sed -E "s/${PACKAGE_NAME}_([^_]+)_${OS}_amd64.${extension}/\1/")
@@ -61,7 +61,7 @@ find_package_file() {
         echo "$similar_file"
         return 0
     fi
-    
+
     # Return the original name if nothing found (will fail gracefully later)
     echo "${FILENAME_BASE}.${extension}"
     return 1
