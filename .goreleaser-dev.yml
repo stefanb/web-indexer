@@ -42,16 +42,14 @@ dockers:
     ids:
       - web-indexer
     image_templates:
-      - joshbeard/web-indexer:latest
-      - joshbeard/web-indexer:{{ .Tag }}
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}
+      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Env.SNAPSHOT_TAG }}
     extra_files:
       - "entrypoint.sh"
     build_flag_templates:
       - "--pull"
       - "--platform=linux/amd64"
     use: buildx
+    skip_push: false
 nfpms:
   - id: 'testpkg'
     vendor: "Josh Beard"

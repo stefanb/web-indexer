@@ -38,7 +38,7 @@ jobs:
       - name: Run GoReleaser for PR Snapshot
         uses: goreleaser/goreleaser-action@v6
         with:
-          args: release --clean --snapshot --config .goreleaser-dev.yml
+          args: release --clean --snapshot --skip=validate --config .goreleaser-dev.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SNAPSHOT_TAG: dev-pr${{ github.event.pull_request.number }}
