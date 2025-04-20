@@ -42,3 +42,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SNAPSHOT_TAG: dev-pr${{ github.event.pull_request.number }}
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            🚀 Dev build has been published!
+
+            **Image tag:** `ghcr.io/${{ github.repository }}:dev-pr${{ github.event.pull_request.number }}`
+
+            **Example usage:**
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:dev-pr${{ github.event.pull_request.number }}
+            docker run --rm ghcr.io/${{ github.repository }}:dev-pr${{ github.event.pull_request.number }}
+            ```
