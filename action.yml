@@ -60,6 +60,10 @@ inputs:
   skipindex-files:
     description: 'A list of files that indicate a directory should be skipped for indexing but still included in the parent directory listing'
     required: false
+  image_tag:
+    description: 'The Docker image tag to use (e.g., latest, dev-pr123)'
+    required: false
+    default: 'latest'
 
 runs:
   using: 'docker'
