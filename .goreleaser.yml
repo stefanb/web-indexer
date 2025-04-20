@@ -51,10 +51,12 @@ dockers:
     ids:
       - web-indexer
     image_templates:
-      - joshbeard/web-indexer:latest
-      - joshbeard/web-indexer:{{ .Tag }}
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}
+      # Use SNAPSHOT_TAG for PR builds (if set), otherwise use Git tag for releases
+      - "joshbeard/web-indexer:{{ .Env.SNAPSHOT_TAG | default .Tag }}"
+      # Also tag :latest for releases, but not for snapshots
+      - "{{ if not .Env.SNAPSHOT_TAG }}joshbeard/web-indexer:latest{{ end }}"
+      - "ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Env.SNAPSHOT_TAG | default .Tag }}"
+      - "{{ if not .Env.SNAPSHOT_TAG }}ghcr.io/joshbeard/web-indexer/web-indexer:latest{{ end }}"
     extra_files:
       - "entrypoint.sh"
     build_flag_templates:

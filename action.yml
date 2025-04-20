@@ -55,10 +55,14 @@ inputs:
   title:
     description: title is shown at the top of the pages
     required: false
+  image_tag:
+    description: 'The Docker image tag to use (e.g., latest, dev-pr123)'
+    required: false
+    default: 'latest'
 
 runs:
   using: 'docker'
-  image: ghcr.io/joshbeard/web-indexer/web-indexer:latest
+  image: ghcr.io/joshbeard/web-indexer/web-indexer:${{ inputs.image_tag }}
   env:
     BASE_URL: ${{ inputs.base_url }}
     DATE_FORMAT: ${{ inputs.date_format }}

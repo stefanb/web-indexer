@@ -292,19 +292,19 @@ func TestIndexer_ParseItem(t *testing.T) {
 	require.NoError(t, err)
 
 	// Simulate items
-	itemDir := Item{Name: filepath.Join(sourceDir, "dir"), IsDir: true}
-	itemFile := Item{Name: "file.html", IsDir: false}
+	itemDir := Item{Name: "dir", IsDir: true}
+	itemFile1 := Item{Name: "file1.txt", IsDir: false}
 
 	// Test directory item
-	modifiedItemDir, err := indexer.parseItem("", itemDir)
+	modifiedItemDir, err := indexer.parseItem(sourceDir, itemDir)
 	require.NoError(t, err)
-	expectUrl := "https://example.com/tmp/" + filepath.Base(sourceDir) + "/dir/index.html"
+	expectUrl := "https://example.com/dir/index.html"
 	assert.Equal(t, expectUrl, modifiedItemDir.URL)
 
 	// Test file item
-	modifiedItemFile, err := indexer.parseItem("dir", itemFile)
+	modifiedItemFile, err := indexer.parseItem(sourceDir, itemFile1)
 	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/dir/file.html", modifiedItemFile.URL)
+	assert.Equal(t, "https://example.com/file1.txt", modifiedItemFile.URL)
 }
 
 func TestGetThemeTemplate(t *testing.T) {

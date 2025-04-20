@@ -1,0 +1,60 @@
+name: PR Build
+
+on:
+  pull_request:
+    types: [opened, synchronize] # Trigger on PR open and updates
+
+permissions:
+  contents: read # Needed for checkout
+  packages: write # Needed to push Docker image to GHCR
+
+jobs:
+  build_pr_snapshot:
+    name: Build PR Snapshot
+    if: github.event.pull_request.user.login == 'joshbeard'
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: auto
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # GoReleaser needs full history
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+          cache: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # GPG setup might not be strictly needed for snapshots,
+      # but keeping it consistent with release workflow if signing is desired later.
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSWORD }}
+        # Only run if secrets are available (might not be for forks)
+        if: secrets.GPG_PRIVATE_KEY != '' && secrets.GPG_PASSWORD != ''
+
+      - name: Run GoReleaser for PR Snapshot
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # Build snapshot, don't publish release, clean workspace
+          args: release --clean --snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Construct the tag: dev-pr<number>
+          SNAPSHOT_TAG: dev-pr${{ github.event.pull_request.number }}
+          # Pass GPG info if available
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          # Docker Hub login isn't needed here as we only push to GHCR for PRs
