@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 - 2025-04-24
+
+- feat: skip index @joshbeard (#81)
+- maint: dependency updates
+- ci: build on dev PRs; misc updates
+
 ## 0.6.1 - 2025-03-15
 
 - fix: relative paths with base URL @joshbeard (#72)
