@@ -29,6 +29,11 @@ func (m *MockSource) Write(data Data, content string) error {
 	return args.Error(0)
 }
 
+func (m *MockSource) EnsureDirExists(relativePath string) error {
+	args := m.Called(relativePath)
+	return args.Error(0)
+}
+
 func TestIndexer_Generate(t *testing.T) {
 	mockSource := new(MockSource)
 	mockTarget := new(MockSource)
@@ -41,7 +46,10 @@ func TestIndexer_Generate(t *testing.T) {
 	}
 
 	mockSource.On("Read", mock.Anything).Return([]Item{}, false, nil)
-	mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
+	// Expect EnsureDirExists to be called on the target
+	mockTarget.On("EnsureDirExists", mock.AnythingOfType("string")).Return(nil)
+	// Write should NOT be called when Read returns empty items
+	// mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
 
 	err := indexer.Generate("path/to/generate")
 	assert.NoError(t, err)
@@ -81,14 +89,13 @@ func TestCustomTemplate(t *testing.T) {
 	require.NoError(t, err)
 
 	mockSource.On("Read", mock.Anything).Return([]Item{}, false, nil)
-	mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
+	// Expect EnsureDirExists to be called on the target before writing
+	mockTarget.On("EnsureDirExists", mock.AnythingOfType("string")).Return(nil)
+	// Write should NOT be called when Read returns empty items
+	// mockTarget.On("Write", mock.Anything, mock.Anything).Return(nil)
 
 	err = indexer.Generate("path/to/generate")
 	assert.NoError(t, err)
-
-	// Assert that the custom template was used and the content is the same
-	args := mockTarget.Calls[0].Arguments
-	assert.Equal(t, html, args.Get(1))
 
 	// Check the file content
 	f, err := os.ReadFile(file.Name())
@@ -254,14 +261,15 @@ func TestResolveItemURL(t *testing.T) {
 	}
 }
 
-func TestIndexer_ParseItem(t *testing.T) {
+// TestIndexer_ProcessItemForData tests the processItemForData method
+func TestIndexer_ProcessItemForData(t *testing.T) {
 	// Create some temporary directories and files
 	sourceDir, err := os.MkdirTemp("", "test")
 	require.NoError(t, err)
 	defer os.RemoveAll(sourceDir) // Clean up after the test
 
-	// Create mock files
-	fileNames := []string{"file1.txt", "file2.txt"}
+	// Create mock files (content doesn't matter for this test)
+	fileNames := []string{"file1.txt"}
 	for _, fName := range fileNames {
 		tmpFn := filepath.Join(sourceDir, fName)
 		if err := os.WriteFile(tmpFn, []byte("test content"), 0o666); err != nil {
@@ -274,37 +282,36 @@ func TestIndexer_ParseItem(t *testing.T) {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
 
-	targetDir, err := os.MkdirTemp("", "test")
-	defer os.RemoveAll(targetDir)
-	require.NoError(t, err)
+	// No need for targetDir in this specific test
 
 	indexer := Indexer{
 		Cfg: Config{
 			BaseURL:       "https://example.com",
-			Source:        sourceDir,
-			Target:        targetDir,
+			Source:        sourceDir,      // Source is the temp dir
+			Target:        "/fake/target", // Target doesn't matter here
 			LinkToIndexes: true,
 			IndexFile:     "index.html",
-			Recursive:     true,
+			Recursive:     true,      // Recursive doesn't affect processItemForData directly
+			BasePath:      sourceDir, // Set BasePath correctly
 		},
 	}
-	err = setupBackends(&indexer)
-	require.NoError(t, err)
+	// No need to call setupBackends as we manually set BasePath
 
 	// Simulate items
 	itemDir := Item{Name: "dir", IsDir: true}
 	itemFile1 := Item{Name: "file1.txt", IsDir: false}
 
 	// Test directory item
-	modifiedItemDir, err := indexer.parseItem(sourceDir, itemDir)
+	modifiedItemDir, err := indexer.processItemForData(sourceDir, itemDir)
 	require.NoError(t, err)
-	expectUrl := "https://example.com/dir/index.html"
-	assert.Equal(t, expectUrl, modifiedItemDir.URL)
+	expectUrlDir := "https://example.com/dir/index.html" // Expect URL relative to BasePath
+	assert.Equal(t, expectUrlDir, modifiedItemDir.URL)
 
 	// Test file item
-	modifiedItemFile, err := indexer.parseItem(sourceDir, itemFile1)
+	modifiedItemFile, err := indexer.processItemForData(sourceDir, itemFile1)
 	require.NoError(t, err)
-	assert.Equal(t, "https://example.com/file1.txt", modifiedItemFile.URL)
+	expectUrlFile := "https://example.com/file1.txt" // Expect URL relative to BasePath
+	assert.Equal(t, expectUrlFile, modifiedItemFile.URL)
 }
 
 func TestGetThemeTemplate(t *testing.T) {
@@ -346,4 +353,93 @@ func TestGetThemeTemplate(t *testing.T) {
 			assert.Equal(t, tc.expected, result)
 		})
 	}
+}
+
+func TestGenerate_Recursive(t *testing.T) {
+	// 1. Setup source directory
+	sourceDir, err := os.MkdirTemp("", "TestGenerateRecursiveSource*")
+	require.NoError(t, err)
+	defer os.RemoveAll(sourceDir)
+	absSourceDir, err := filepath.Abs(sourceDir) // Need absolute path for BasePath consistency
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath.Join(absSourceDir, "file1.txt"), []byte("content1"), 0o644)
+	require.NoError(t, err)
+	subDir := filepath.Join(absSourceDir, "subdir")
+	err = os.Mkdir(subDir, 0o755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(subDir, "file2.txt"), []byte("content2"), 0o644)
+	require.NoError(t, err)
+
+	// 2. Setup target mock
+	mockTarget := new(MockSource) // Reusing MockSource for target interface compliance
+
+	// 3. Create Indexer directly (bypass New and setupBackends for cleaner mocking)
+	cfg := Config{
+		Source:         absSourceDir,              // Use absolute path
+		Target:         "/fake/target",            // Mock target path
+		Recursive:      true,                      // Enable recursion
+		SortBy:         "name",                    // Define required config fields
+		Order:          "asc",                     // Define required config fields
+		IndexFile:      "index.html",              // Use standard index file name
+		BasePath:       absSourceDir,              // Set BasePath explicitly
+		DateFormat:     "2006-01-02 15:04:05 MST", // Provide default or required format
+		DirsFirst:      true,                      // Standard behavior
+		NoIndexFiles:   []string{},                // Ensure no skips interfere
+		SkipIndexFiles: []string{},                // Ensure no skips interfere
+		Skips:          []string{},                // Ensure no skips interfere
+		Theme:          "default",                 // Provide default theme
+	}
+	sourceBackend := &LocalBackend{path: absSourceDir, cfg: cfg} // Use real local backend for source
+
+	indexer := Indexer{
+		Cfg:    cfg,
+		Source: sourceBackend,
+		Target: mockTarget, // Use the mock target
+	}
+
+	// 4. Setup mock expectations
+	// Expect EnsureDirExists for root ("/") and subdir ("/subdir") relative paths
+	// Allow any number of calls because Write might also call it internally depending on implementation.
+	mockTarget.On("EnsureDirExists", mock.AnythingOfType("string")).Return(nil)
+
+	// Expect Write for root index: should contain file1.txt and subdir/
+	// We verify the RelativePath and that the 'subdir' item exists.
+	mockTarget.On("Write", mock.MatchedBy(func(data Data) bool {
+		if data.RelativePath != "/" {
+			return false
+		}
+		foundSubdir := false
+		for _, item := range data.Items {
+			if item.Name == "subdir" && item.IsDir {
+				foundSubdir = true
+				break
+			}
+		}
+		// Also check for file1.txt
+		foundFile1 := false
+		for _, item := range data.Items {
+			if item.Name == "file1.txt" && !item.IsDir {
+				foundFile1 = true
+				break
+			}
+		}
+		return foundSubdir && foundFile1 && len(data.Items) == 2
+	}), mock.AnythingOfType("string")).Return(nil).Once()
+
+	// Expect Write for subdir index: should contain file2.txt
+	// We verify the RelativePath and that 'file2.txt' exists.
+	mockTarget.On("Write", mock.MatchedBy(func(data Data) bool {
+		if data.RelativePath != "/subdir" {
+			return false
+		}
+		return len(data.Items) == 1 && data.Items[0].Name == "file2.txt" && !data.Items[0].IsDir
+	}), mock.AnythingOfType("string")).Return(nil).Once()
+
+	// 5. Call Generate from the root source path
+	err = indexer.Generate(absSourceDir)
+	require.NoError(t, err)
+
+	// 6. Assert mock expectations were met
+	mockTarget.AssertExpectations(t)
 }

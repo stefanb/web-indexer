@@ -134,6 +134,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&cfg.Minify, "minify", "m", false, "Minify the index page")
 	rootCmd.Flags().StringSliceVarP(&cfg.NoIndexFiles, "noindex-files", "n", []string{".noindex"}, "A list of files that indicate a directory should be skipped. "+
 		"Comma separated or specified multiple times")
+	rootCmd.Flags().StringSliceVarP(&cfg.SkipIndexFiles, "skipindex-files", "", []string{".skipindex"}, "A list of files that indicate a directory should be skipped for indexing but still included in the parent directory listing. "+
+		"Comma separated or specified multiple times")
 	rootCmd.Flags().BoolVarP(&cfg.Quiet, "quiet", "q", false, "Suppress log output")
 	rootCmd.Flags().StringVarP(&cfg.Order, "order", "", "asc", "The order for the items. One of: asc, desc")
 	rootCmd.Flags().BoolVarP(&cfg.Recursive, "recursive", "r", false, "List files recursively")

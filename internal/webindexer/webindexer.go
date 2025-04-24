@@ -43,6 +43,7 @@ type Indexer struct {
 type FileSource interface {
 	Read(path string) ([]Item, bool, error)
 	Write(data Data, content string) error
+	EnsureDirExists(relativePath string) error
 }
 
 // Item represents an S3 key, or a local file/directory.
@@ -207,45 +208,70 @@ func (i Indexer) Generate(path string) error {
 
 	// If hasNoIndex is true, skip this directory entirely
 	if hasNoIndex {
+		log.Debugf("Skipping generation for %s due to noindex file", path)
 		return nil
 	}
 
+	// Prepare template data regardless of whether items were found
 	data, err := i.data(items, path)
 	if err != nil {
 		return err
 	}
 
-	var tmpl *template.Template
-	var templStr string
-	if i.Cfg.Template != "" {
-		log.Debugf("Using custom template %s for %s", i.Cfg.Template, path)
-		templBytes, err := os.ReadFile(i.Cfg.Template)
+	// Ensure the target directory exists before attempting to write or recurse
+	if err := i.Target.EnsureDirExists(data.RelativePath); err != nil {
+		return fmt.Errorf("failed to ensure target directory exists for %s: %w", data.RelativePath, err)
+	}
+
+	// Only generate and write the index file if there are items to list.
+	// This handles the skipindex case (Read returns empty items) and empty directories.
+	if len(items) > 0 {
+		var tmpl *template.Template
+		var templStr string
+		if i.Cfg.Template != "" {
+			log.Debugf("Using custom template %s for %s", i.Cfg.Template, path)
+			templBytes, err := os.ReadFile(i.Cfg.Template)
+			if err != nil {
+				return err
+			}
+			templStr = string(templBytes)
+		} else {
+			log.Debugf("Using %s theme template for %s", i.Cfg.Theme, path)
+			templStr = getThemeTemplate(i.Cfg.Theme)
+		}
+
+		tmpl, err = template.New("index").Parse(templStr)
 		if err != nil {
 			return err
 		}
-		templStr = string(templBytes)
+
+		generated := new(strings.Builder)
+		if err := tmpl.Execute(generated, data); err != nil {
+			return err
+		}
+
+		output := generated.String()
+		if i.Cfg.Minify {
+			output = minifyHTML(generated.String())
+		}
+
+		if err := i.Target.Write(data, output); err != nil {
+			return err
+		}
 	} else {
-		log.Debugf("Using %s theme template for %s", i.Cfg.Theme, path)
-		templStr = getThemeTemplate(i.Cfg.Theme)
+		// Log if we are skipping the write due to empty items (skipindex or empty dir)
+		log.Debugf("Skipping index file generation for %s (no items or skipindex found)", path)
 	}
 
-	tmpl, err = template.New("index").Parse(templStr)
-	if err != nil {
-		return err
-	}
-
-	generated := new(strings.Builder)
-	if err := tmpl.Execute(generated, data); err != nil {
-		return err
-	}
-
-	output := generated.String()
-	if i.Cfg.Minify {
-		output = minifyHTML(generated.String())
-	}
-
-	if err := i.Target.Write(data, output); err != nil {
-		return err
+	// Process items to handle recursion.
+	// This loop won't execute if items is empty.
+	for _, item := range items { // Iterate over original items
+		err := i.parseItem(path, item) // Pass item by value, check error
+		if err != nil {
+			// Stop processing if any subdirectory fails? Or just log?
+			// Return the error to propagate it up.
+			return err
+		}
 	}
 
 	return nil
@@ -297,20 +323,23 @@ func (i Indexer) data(items []Item, path string) (Data, error) {
 		data.HasParent = parent != path
 	}
 
+	// Process items within the data function to set their URLs
+	processedItems := make([]Item, 0, len(items))
 	for _, item := range items {
-		item, err := i.parseItem(path, item)
+		processedItem, err := i.processItemForData(path, item) // Rename to avoid confusion with recursive call
 		if err != nil {
 			return Data{}, err
 		}
-
-		data.Items = append(data.Items, item)
+		processedItems = append(processedItems, processedItem)
 	}
+	data.Items = processedItems // Assign processed items with URLs
 
 	i.sort(&data.Items)
 	return data, nil
 }
 
-func (i Indexer) parseItem(path string, item Item) (Item, error) {
+// processItemForData generates the URL for an item. Does NOT handle recursion.
+func (i Indexer) processItemForData(path string, item Item) (Item, error) {
 	// Calculate the relative path by removing the base path
 	relativePath := strings.TrimPrefix(path, i.Cfg.BasePath)
 	// Ensure relative path is prefixed with a slash
@@ -319,13 +348,23 @@ func (i Indexer) parseItem(path string, item Item) (Item, error) {
 	}
 
 	item.URL = resolveItemURL(i.Cfg.BaseURL, relativePath, item.Name, item.IsDir, i.Cfg.LinkToIndexes, i.Cfg.IndexFile)
+	// Return the item with the URL set
+	return item, nil
+}
 
+// parseItem handles the recursive call for directories.
+func (i Indexer) parseItem(path string, item Item) error {
+	// If the item is a directory and recursive mode is enabled, generate its index
 	if item.IsDir && i.Cfg.Recursive {
-		if err := i.Generate(filepath.Join(path, item.Name)); err != nil {
-			return Item{}, err
+		// Construct the full path for the subdirectory
+		subDirPath := filepath.Join(path, item.Name)
+		if err := i.Generate(subDirPath); err != nil {
+			// Log the error but also return it to stop processing this branch
+			log.Errorf("Error generating index for subdirectory %s: %v", subDirPath, err)
+			return fmt.Errorf("error generating index for subdirectory %s: %w", subDirPath, err)
 		}
 	}
-	return item, nil
+	return nil // Return nil error if no recursion error occurred
 }
 
 func (i Indexer) formatTitle(path, relativePath string) string {
