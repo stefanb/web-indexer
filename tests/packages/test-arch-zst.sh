@@ -2,6 +2,8 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+banner "Testing Arch Linux ZST"
+
 # Find the actual package file
 PKG_FILE=$(basename $(find_package_file "pkg.tar.zst"))
 echo "Using package file: $PKG_FILE"

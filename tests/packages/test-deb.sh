@@ -2,6 +2,8 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+banner "Testing Debian DEB"
+
 # Find the actual package file
 DEB_FILE=$(basename $(find_package_file "deb"))
 echo "Using DEB file: $DEB_FILE"

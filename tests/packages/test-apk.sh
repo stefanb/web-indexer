@@ -2,6 +2,8 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+banner "Testing Arch Linux APK"
+
 # Find the actual APK file
 APK_FILE=$(basename $(find_package_file "apk"))
 echo "Using APK file: $APK_FILE"

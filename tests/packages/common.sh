@@ -27,9 +27,16 @@ export FILENAME_BASE="${PACKAGE_NAME}_${EXPECTED_VERSION}_${OS}_amd64"
 export DIST_DIR="${script_dir}/../../dist"
 export TERM=xterm-256color
 
-# For debugging
-echo "Looking for packages with base filename: ${FILENAME_BASE}"
-ls -la ${DIST_DIR} || echo "Dist directory not found or empty"
+banner() {
+    local text="$1"
+    local width=${#text}
+    local padding=$(( (60 - width) / 2 ))
+    local stars=$(printf '%*s' "$padding" | tr ' ' '*')
+
+    echo -e "\033[1;36m" # Cyan bold text
+    echo "$stars $text $stars"
+    echo -e "\033[0m" # Reset color
+}
 
 # Function to find the actual package file if the exact name doesn't match
 find_package_file() {
@@ -67,6 +74,5 @@ find_package_file() {
     return 1
 }
 
-# Export the function so it's available to the test scripts
 export -f find_package_file
-
+export -f banner

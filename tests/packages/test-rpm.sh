@@ -2,6 +2,8 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+banner "Testing RPM on Rocky Linux 9"
+
 # Find the actual package file
 RPM_FILE=$(basename $(find_package_file "rpm"))
 echo "Using RPM file: $RPM_FILE"

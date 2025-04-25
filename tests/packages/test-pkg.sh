@@ -2,6 +2,8 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
+banner "Testing package archive"
+
 # Find the actual package file
 TAR_FILE=$(basename $(find_package_file "tar.gz"))
 echo "Using tarball: $TAR_FILE"
