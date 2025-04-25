@@ -47,7 +47,7 @@ dockers:
       - "entrypoint.sh"
     build_flag_templates:
       - "--pull"
-      - "--platform=linux/amd64"
+      - "--platform=linux/amd64,linux/arm64"
     use: buildx
     skip_push: false
 nfpms:
