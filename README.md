@@ -12,6 +12,8 @@ Lambda), but it's simple and works for content that remains static between
 deployments. This is particularly helpful for hosting static artifacts on S3,
 since S3 doesn't natively offer content indexes.
 
+## Alternatives
+
 If you're using Nginx, [fancy_index](https://www.nginx.com/resources/wiki/modules/fancy_index/)
 is the right tool for the job and does this dynamically with full customization.
 If you're using Apache, [mod_autoindex](https://httpd.apache.org/docs/2.4/mod/mod_autoindex.html) is
@@ -19,11 +21,12 @@ what you're looking for, maybe with something like [Apaxy](https://oupala.github
 
 ## Usage
 
-Download packages from the [releases](https://github.com/joshbeard/web-indexer/releases),
-use the Docker image from
-[`ghcr.io/joshbeard/web-indexer/web-indexer`](https://github.com/joshbeard/web-indexer/pkgs/container/web-indexer%2Fweb-indexer)
-or [`joshbeard/web-indexer`](https://hub.docker.com/r/joshbeard/web-indexer) on
-the Docker Hub, use the [GitHub Action](#github-action) or a [GitLab job](#gitlab-ci).
+There's several ways to use web-indexer:
+
+- **Package:** Download packages from the [releases](https://github.com/joshbeard/web-indexer/releases)
+- **Docker:** Use the Docker image from [`ghcr.io/joshbeard/web-indexer/web-indexer`](https://github.com/joshbeard/web-indexer/pkgs/container/web-indexer%2Fweb-indexer)
+  or [`joshbeard/web-indexer`](https://hub.docker.com/r/joshbeard/web-indexer) on the Docker Hub
+- **CI/CD:** Use the [GitHub Action](#github-action) or a [GitLab job](#gitlab-ci).
 
 ```plain
 Usage:
@@ -119,7 +122,7 @@ Web-indexer comes with several built-in themes that provide different visual sty
 
 ### Available Themes
 
-- **default**: The original theme with a clean, minimal design
+- **default**: The original theme with a clean, minimal design supporting both light and dark modes dynamically
 - **solarized**: Based on the popular [Solarized](https://ethanschoonover.com/solarized/) color scheme with carefully chosen colors for optimal readability
 - **nord**: Inspired by the [Nord](https://www.nordtheme.com/) color palette with its Arctic-inspired colors
 - **dracula**: Based on the popular [Dracula](https://draculatheme.com/) dark theme with vibrant, high-contrast colors
@@ -150,7 +153,7 @@ web-indexer --source /path/to/directory --target /path/to/directory --template /
 
 ## GitHub Action
 
-It's also available as a GitHub action.
+web-indexer is also available as a GitHub action.
 
 For example:
 
@@ -194,31 +197,24 @@ jobs:
             ghcr.io/joshbeard/web-indexer/web-indexer:latest
 ```
 
-To test a specific Pull Request build, replace `latest` with the PR tag (e.g., `dev-pr123`):
-
-```yaml
-# Example using PR 123's build
-docker run --rm \
-  # ... other flags ...
-  ghcr.io/joshbeard/web-indexer/web-indexer:dev-pr123
-```
-
 Refer to the [`action.yml`](action.yml) for all available inputs, which
 correspond to the CLI arguments and configuration parameters.
 
 ## GitLab CI
 
 ```yaml
+# Ensure you're authorized with AWS when using S3
 web-index:
   image:
     name: joshbeard/web-indexer
     entrypoint: ['']
-  variables:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_REGION: 'us-east-1'
   script:
-    web-indexer
+    - web-indexer
+      --source dist/web/
+      --target s3://my-bucket/public/
+      --title "Project Files"
+      --recursive
+      --theme nord
 ```
 
 ## Configuration
