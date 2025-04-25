@@ -7,8 +7,8 @@ file directory or S3 bucket, such as a file listing page.
   <img width="420" height="236" alt="screenshot" src=".github/readme/screenshot.png" />
 </p>
 
-This isn't a good solution for a dynamic listing of an S3 bucket (maybe try
-Lambda), but it's simple and works for content that remains static between
+This isn't a good solution for a dynamic listing of directories or S3 buckets,
+but it's simple and works for content that remains static between
 deployments. This is particularly helpful for hosting static artifacts on S3,
 since S3 doesn't natively offer content indexes.
 
@@ -16,8 +16,12 @@ since S3 doesn't natively offer content indexes.
 
 If you're using Nginx, [fancy_index](https://www.nginx.com/resources/wiki/modules/fancy_index/)
 is the right tool for the job and does this dynamically with full customization.
+
 If you're using Apache, [mod_autoindex](https://httpd.apache.org/docs/2.4/mod/mod_autoindex.html) is
 what you're looking for, maybe with something like [Apaxy](https://oupala.github.io/apaxy/).
+
+Options for S3 include [flightlesstux/S3-Directory-Listing](https://github.com/flightlesstux/S3-Directory-Listing)
+and [rufuspollock/s3-bucket-listing](https://github.com/rufuspollock/s3-bucket-listing).
 
 ## Usage
 
