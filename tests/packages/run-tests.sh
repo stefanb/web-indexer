@@ -29,28 +29,26 @@ if [ -z "$tests" ]; then
 fi
 
 for test_script in $tests; do
-    echo "==============================================================================="
-    echo "▶ Running $(basename $test_script) for $EXPECTED_VERSION"
-    echo "==============================================================================="
+    banner "[$(basename $test_script)]"
     if ! bash $test_script; then
-        echo "${red}FAILED: ${test_script}${reset}"
+        echo "${red}❌ FAILED: $(basename "${test_script}")${reset}"
         FAILED=1
-        FAILED_TESTS="$FAILED_TESTS $test_script"
+        FAILED_TESTS="$FAILED_TESTS $(basename "$test_script")"
         continue
     fi
 
-    echo "${green}PASSED: $(basename $test_script)${reset}"
+    echo "${green}✅ PASSED: $(basename $test_script)${reset}"
     PASSED_TESTS="$PASSED_TESTS $(basename $test_script)"
 done
 
 echo
 echo "==============================================================================="
-if [ $FAILED -eq 1 ]; then
-    echo "${red}Failed:$FAILED_TESTS${reset}"
-    if [ -n "$PASSED_TESTS" ]; then
-        echo "${green}Passed:$PASSED_TESTS${reset}"
-    fi
-    exit 1
+if [ $FAILED -eq 0 ]; then
+    echo "${green}✅ All tests passed!${reset}"
 else
-    echo "${green}All tests passed!${reset}"
+    if [ -n "$PASSED_TESTS" ]; then
+        echo "${green}✅ Passing tests:$PASSED_TESTS${reset}"
+    fi
+    echo "${red}❌ Failing tests:$FAILED_TESTS${reset}"
+    exit 1
 fi

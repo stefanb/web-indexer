@@ -2,8 +2,6 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
-banner "Testing Arch Linux ZST"
-
 # Find the actual package file
 PKG_FILE=$(basename $(find_package_file "pkg.tar.zst"))
 echo "Using package file: $PKG_FILE"
@@ -20,10 +18,6 @@ fi
 
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm archlinux /bin/bash -c "
-    # List available files for debugging
-    echo 'Available files in /tmp/dist:';
-    ls -la /tmp/dist;
-
     # Copy the package file
     cp /tmp/dist/${PKG_FILE} /tmp;
     cd /tmp;

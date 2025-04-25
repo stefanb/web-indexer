@@ -1,6 +1,8 @@
 # Run 'make help' for a list of targets.
 .DEFAULT_GOAL := help
 
+VERSION := $(shell git describe --tags --always --dirty)
+
 .PHONY: help
 help: ## Shows this help
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -56,3 +58,7 @@ check-vuln: ## Check for vulnerabilities using 'govulncheck'
 clean: ## Clean test files
 	rm -f dist/*
 	rm -f coverage.txt coverage.xml coverage.html checkstyle-report.xml
+
+.PHONY: test-packages
+test-packages: ## Run tests for all package formats. Set VERSION=x.y.z to test a specific version.
+	./tests/packages/run-tests.sh --version "${VERSION}"

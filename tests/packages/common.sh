@@ -31,7 +31,7 @@ banner() {
     local text="$1"
     local width=${#text}
     local padding=$(( (60 - width) / 2 ))
-    local stars=$(printf '%*s' "$padding" | tr ' ' '*')
+    local stars=$(printf '%*s' "$padding" | tr ' ' '=')
 
     echo -e "\033[1;36m" # Cyan bold text
     echo "$stars $text $stars"

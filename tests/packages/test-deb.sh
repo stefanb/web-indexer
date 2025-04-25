@@ -2,8 +2,6 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
-banner "Testing Debian DEB"
-
 # Find the actual package file
 DEB_FILE=$(basename $(find_package_file "deb"))
 echo "Using DEB file: $DEB_FILE"
@@ -20,10 +18,6 @@ fi
 
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm debian /bin/bash -c "
-    # List available files for debugging
-    echo 'Available files in /tmp/dist:';
-    ls -la /tmp/dist;
-
     # Copy the package file
     cp /tmp/dist/${DEB_FILE} /tmp;
     cd /tmp;

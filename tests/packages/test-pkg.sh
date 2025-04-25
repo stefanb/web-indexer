@@ -2,8 +2,6 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
-banner "Testing package archive"
-
 # Find the actual package file
 TAR_FILE=$(basename $(find_package_file "tar.gz"))
 echo "Using tarball: $TAR_FILE"
@@ -20,10 +18,6 @@ fi
 
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm rockylinux:9 /bin/bash -c "
-    # List available files for debugging
-    echo 'Available files in /tmp/dist:';
-    ls -la /tmp/dist;
-
     # Copy the package file
     cp /tmp/dist/${TAR_FILE} /tmp;
     tar -xzf /tmp/${TAR_FILE} -C /tmp;

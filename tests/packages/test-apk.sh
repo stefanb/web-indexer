@@ -2,8 +2,6 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
-banner "Testing Arch Linux APK"
-
 # Find the actual APK file
 APK_FILE=$(basename $(find_package_file "apk"))
 echo "Using APK file: $APK_FILE"
@@ -20,10 +18,6 @@ fi
 
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm alpine /bin/ash -c "
-    # List available files for debugging
-    echo 'Available files in /tmp/dist:';
-    ls -la /tmp/dist;
-
     # Copy the package file
     cp /tmp/dist/${APK_FILE} /tmp;
     cd /tmp;

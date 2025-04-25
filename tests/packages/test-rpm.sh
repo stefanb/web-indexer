@@ -2,8 +2,6 @@
 script_dir=$(cd $(dirname $0) && pwd)
 source $script_dir/common.sh
 
-banner "Testing RPM on Rocky Linux 9"
-
 # Find the actual package file
 RPM_FILE=$(basename $(find_package_file "rpm"))
 echo "Using RPM file: $RPM_FILE"
@@ -20,10 +18,6 @@ fi
 
 docker run -v ${DIST_DIR}:/tmp/dist \
     --rm rockylinux:9 /bin/bash -c "
-    # List available files for debugging
-    echo 'Available files in /tmp/dist:';
-    ls -la /tmp/dist;
-
     # Copy the package file
     cp /tmp/dist/${RPM_FILE} /tmp;
     cd /tmp;

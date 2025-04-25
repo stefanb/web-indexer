@@ -63,7 +63,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Test packages
-        run: ./tests/packages/run-tests.sh --version ${{ steps.get_version.outputs.VERSION }}
+        run: make test-packages VERSION="${{ steps.get_version.outputs.VERSION }}"
 
   docker-hub-doc:
     name: Publish DockerHub Readme
